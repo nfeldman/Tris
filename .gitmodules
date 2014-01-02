@@ -1,0 +1,6 @@
+[submodule "grue"]
+	path = grue
+	url = git@bitbucket.org:nfeldman/grue.git
+[submodule "requirer"]
+	path = requirer
+	url = https://github.com/nfeldman/requirer.git
