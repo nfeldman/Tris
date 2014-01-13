@@ -1,0 +1,38 @@
+.root {
+    width: 800px;
+    height: 600px;
+    border: 1px solid #444;
+    margin: auto;
+}
+
+.game,
+.meta,
+.playfield,
+.preview-wrap {
+    float: left;
+}
+
+.playfield {
+    width: 258px;
+    height: 508px;
+    border: 4px solid #555;
+    margin-left: 50px;
+
+}
+
+.preview-wrap {
+    width: 110px;
+    margin-left: 50px;
+    margin-top: 75px;
+}
+.preview {
+    height: 200px;
+    padding: 0 10px;
+    border: 4px solid #555;
+}
+.scoreboard {
+    border: 2px solid #555;
+    padding: 10px;
+    margin-left: 50px;
+    margin-top: 250px;
+}

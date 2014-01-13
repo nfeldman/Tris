@@ -1,0 +1,46 @@
+<!doctype html>
+<!--[if IE]><![endif]-->
+<!--[if IE 9]>         <html class="ie-9" lang="en"> <![endif]-->
+<!--[if gt IE 9]><!--> <html lang="en"> <!--<![endif]--> 
+    <head>
+        <title>Falling Block Game</title>
+        <meta charset="utf-8">
+
+        <script>(function(a,c,d){var b=' '+a[c]+' ';a[c]?(b.indexOf('js')>-1||(a[c]+=' js'),b.indexOf('js-off')>-1||(a[c]+=' js-off')):a[c]="js js-off",setTimeout(function(){a[c]=a[c].replace(/\s*?js-off\s?/,'');a=b=c=d},3e3)}(document.documentElement, 'className'))</script>
+
+
+
+        <meta name="author" content="Noah Feldman">
+        <link type="text/css" rel="stylesheet" href="/Grue/css/vendor/normalize/normalize.css" media="all">
+        <link type="text/css" rel="stylesheet" href="/Grue/css/base.css" media="all">
+        <link type="text/css" rel="stylesheet" href="/css/desktop.css" media="all">
+    </head>
+    <body>
+        <div class="root clrfix">
+            <div class="game">
+                <h1>Tetris</h1>
+                <div class="preview-wrap">
+                    <h2>Preview</h2>
+                    <div class="preview"></div>
+                </div>
+                <div style="position:relative" class="playfield"></div>
+            </div>
+            <div class="meta">
+                <div class="scoreboard">
+                    <div>Level: <span></span></div>
+                    <div>Lines: <span></span></div>
+                    <div>Score: <span></span></div>
+                </div>
+                <div class="buttons">
+                    <button type="button" name="toggle">Play</button>
+                    <button type="button" name="new">New Game</button>
+                    <button type="button" name="options">Options</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="/Grue/js/base/base.js"></script>
+        <script type="text/javascript">GRUE.set('mode', 'development')</script>
+        <script type="text/javascript" src="/bootstrap.js" id="grue-bootstrap" data-main="index"></script>
+    </body>
+</html>
