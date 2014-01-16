@@ -1,6 +1,13 @@
-var pieces  = require('pieces');
+var pieces = require('pieces');
 
 module.exports = Preview;
+
+/**
+ * Creates a Preview object that manages the rendering of
+ * 1, 2, or 3 upcoming pieces. Instances must be provided
+ * with a Bag object.
+ * @constructor
+ */
 function Preview () {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -18,7 +25,7 @@ function Preview () {
 
 Preview.prototype = {
     constructor: Preview,
-    draw: function () {
+    draw: function drawPreview () {
         var n = this._showNextCt,
             next = this.bag.preview(n),
             x = 0,

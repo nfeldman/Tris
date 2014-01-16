@@ -14,7 +14,7 @@ function Board (rows, cols, dx, dy) {
     Component.apply(this);    
     this.__grue_props.use_event_pool = true;
 
-    this.piece = {
+    this._piece = {
         x: 0,
         y: 0,
         r: 0,
@@ -23,16 +23,18 @@ function Board (rows, cols, dx, dy) {
 
     // we have to know about a ticker for animations to work
     this.ticker = null;
+
     this._frameCt = 0;
+    this._actions = [];
 
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute('tabindex', '-1');
-    this.ctx = this.canvas.getContext('2d');
+    this._ctx = this.canvas.getContext('2d');
     // this.buffer = this.canvas.cloneNode();
     this.canvas.width  = /*this.buffer.width  = */cols * dx;
     this.canvas.height = /*this.buffer.height = */rows * dy;
 
-    this.rows = rows + 2; // allows new pieces to be partially visible
+    this._rows = rows + 2; // allows new pieces to be partially visible
 
     // using the array constructor looks weird
     // but it makes sense when you know the size
@@ -40,17 +42,30 @@ function Board (rows, cols, dx, dy) {
     var row = new Array(cols),
         i;
 
-    this.cols = cols;
-    this.dx = dx;
-    this.dy = dy;
+    this._cols = cols;
+    this._dx = dx;
+    this._dy = dy;
 
-    this.field = new Array(this.rows);
+    this._field = new Array(this._rows);
 
     for (i = 0; i < 10; i++)
         row[i] = false;
 
-    for (i = 0; i < this.rows; i++)
-        this.field[i] = row.slice(0);
+    for (i = 0; i < this._rows; i++)
+        this._field[i] = row.slice(0);
+
+    Object.defineProperties(this, {
+        _piece: {enumerable: false},
+        _frameCt: {enumerable: false},
+        _actions: {enumerable: false},
+        _ctx: {enumerable: false},
+        _cols: {enumerable: false},
+        _rows: {enumerable: false},
+        _field: {enumerable: false},
+        _dx: {enumerable: false},
+        _dy: {enumerable: false}
+
+    })
 }
 
 Board.prototype = {
@@ -60,22 +75,21 @@ Board.prototype = {
         rowsCleared: {value: true}
     }),
     drawPiece: function (piece, dontClear) {
-        !dontClear && this.clearLastPiece();
-        this.piece.x = piece.x;
-        this.piece.y = piece.y - 2;
-        this.piece.r = piece.r;
-        this.piece.t = piece.piece;
-        piece.y >= 0 && pieces.drawPiece(this.piece.t, this.piece.x, this.piece.y, this.dx, this.dy, this.piece.r, this.ctx);
+        !dontClear && this.clearLastPiece(this._piece.t, this._piece.x, this._piece.y, this._piece.r);
+        this._piece.x = piece.x;
+        this._piece.y = piece.y - 2;
+        this._piece.r = piece.r;
+        this._piece.t = piece.piece;
+        piece.y >= 0 && pieces.drawPiece(this._piece.t, this._piece.x, this._piece.y, this._dx, this._dy, this._piece.r, this._ctx);
     },
 
-    clearLastPiece: function () {
-        if (this.piece.x || this.piece.y)
-            pieces.clearPiece(this.piece.t, this.piece.x, this.piece.y, this.dx, this.dy, this.piece.r, this.ctx);
+    clearLastPiece: function (t, x, y, r) {
+        pieces.clearPiece(t, x, y, this._dx, this._dy, r, this._ctx);
     },
 
     isRowFilled: function (idx) {
-        for (var i = 0, l = this.cols; i < l; i++)
-            if (!this.field[idx][i])
+        for (var i = 0, l = this._cols; i < l; i++)
+            if (!this._field[idx][i])
                 return false;
         return true;
     },
@@ -86,10 +100,9 @@ Board.prototype = {
 
         eachblock(piece, function (x, y) {rows.push(y)});
 
-        for (var i = 0, l = rows.length; i < l; i++) {
+        for (var i = 0, l = rows.length; i < l; i++)
             if (this.isRowFilled(rows[i]))
-                occupied.push(i);
-        }
+                occupied.push(rows[i]);
 
         if (occupied.length) {
             this.clearRows(occupied);
@@ -102,24 +115,37 @@ Board.prototype = {
         if (!rows.length)
             throw Error('No rows to clear');
 
-        var imgData = this.ctx.getImageData(0, 0, this.dx * this.cols, rows[i] * this.dy);
+        var ct = 0;
+        if (rows.length == 1) {
+            ct = 1;
+            // do animation etc and return
+        }
+
+        for (var i = 1, l = rows.length; i < l; i++) {
+            if (rows[i] - rows[i-1] == 1)
+                ++ct;
+        }
 
         // for (var i = 0, l = rows.length; i < l; i++)
 
          
         // var top = 0;
 
-        // if (idx >= this.field.length)
+        // if (idx >= this._field.length)
         //     throw Error('cannot clear non-existant row ' + idx);
 
-        // for (var i = 0; i < this.cols; i++)
-        //     this.field[i] = false;
+        // for (var i = 0; i < this._cols; i++)
+        //     this._field[i] = false;
 
-        // this.ctx.clearRect(0, idx * this.dx, this.dx, this.dy);
+        // this._ctx.clearRect(0, idx * this._dx, this._dx, this._dy);
     },
-
-    flashRow: function (idx, ct) {
-        var imgData = this.ctx.getImageData(0, idx * this.dy, this.dx * this.cols, this.dy * ct);
+    // cycle goes:
+    // frames 1  -  5, overlay rows starting with opacity at 100%, reduce opacity by 20% each frame
+    // frames 6  - 10, reverse
+    // frames 11 - 15 reverse again
+    // frame 16 draw cleaned board
+    flashRows: function (idx, ct) {
+        var imgData = this._ctx.getImageData(0, idx * this._dy, this._dx * this._cols, this._dy * ct);
     },
 
     willIntersect: function (piece) {
@@ -127,9 +153,9 @@ Board.prototype = {
         eachblock(piece, function (x, y) {
             if (this.isCellOccupied(x, y)) {
                 result = {
-                    left: x < 0 || piece.x < this.piece.x && this.field[y] && this.field[y][x],
-                    right: x >= this.cols || piece.x > this.piece.x && this.field[y] && this.field[y][x],
-                    bottom: y >= this.rows || piece.y < this.piece.y && this.field[y][x],
+                    left: x < 0 || piece.x < this._piece.x && this._field[y] && this._field[y][x],
+                    right: x >= this._cols || piece.x > this._piece.x && this._field[y] && this._field[y][x],
+                    bottom: y >= this._rows || piece.y < this._piece.y && this._field[y][x],
                     x: x,
                     y: y
                 };
@@ -140,26 +166,26 @@ Board.prototype = {
     },
 
     isCellOccupied: function (x, y) {
-        if (this.field[y] == null || this.field[y][x] == null)
+        if (this._field[y] == null || this._field[y][x] == null)
             return true;
-        return this.field[y][x];
+        return this._field[y][x];
     },
 
     occupy: function (piece) {
         eachblock(piece, function (x, y) {
-            this.field[y][x] = true;
+            this._field[y][x] = true;
         }, this);
         // console.log(this.toString());
     },
 
     getLowestOccupiedCell: function (piece) {
         // var occupied = true;
-        // for (var i = 0; i < this.rows; i++)
+        // for (var i = 0; i < this._rows; i++)
         //     if (!this.ce)
     },
 
     toString: function () {
-        return this.field.map(function (row, i) {
+        return this._field.map(function (row, i) {
             return [i].concat(row.map(function (cell) {
                 return cell ? '#' : ' ';
             })).join('');

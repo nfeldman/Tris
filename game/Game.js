@@ -13,7 +13,8 @@ module.exports = Game;
  * @private
  */
 function GameState () {
-    this.initial = true;     // whether the game has just begun
+    this.initial = true;
+    this.ended   = false;    // whether the game has ended
     this.playing = false;    // whether the game is active
     this.sliding = false;    // whether the current piece can slide
     this.descending = false; // whether pieces are currently falling
@@ -114,9 +115,9 @@ Game.prototype = {
             this.piece = new pieces.Piece(null, this.dx, this.dy);
 
         var piece = this.bag.next();
-        console.log('next piece:', piece);
+        // console.log('next piece:', piece);
         pieces.Piece.call(this.piece, piece, this.dx, this.dy);
-
+        this.piece.x = this.piece.y = 0;
         GameCounters.call(this._counters);
         ++this.piecesSeen;
 
@@ -131,20 +132,24 @@ Game.prototype = {
 
         var speed = this.score.level > 10 ? 0 : Math.floor(Math.log(10 - this.score.level) * 500),
             actions = this._actions.slice(0);
-
         this._actions.length = 0;
         this._counters.traveled += speed ? 10/speed : 1;
 
         // skip rerendering if nothing has changed
-        this._state.rendering = !actions.length && 1 > this._counters.traveled;
+        this._state.rendering = actions.length || this._counters.traveled >= 1;
+
 
         if (this._state.descending) {
             if (this._counters.traveled >= 1)
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
             if (!this._counters.slideFrames) {
-                this.board.occupy(this.piece);
-                this._actions.push(Game.ACTIONS.CLEAR);
+                if (~this.piece.x && ~this.piece.y) {
+                    this.board.occupy(this.piece);
+                    this._actions.push(Game.ACTIONS.CLEAR);
+                } else {
+                    this.gameOver();
+                }
                 this._state.sliding = false;
             } else {
                 --this._counters.slideFrames;
@@ -162,7 +167,12 @@ Game.prototype = {
                 case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
             }
         }
+    },
 
+    gameOver: function () {
+        this.togglePlay();
+        alert('Game Over!');
+        this.newGame();
     },
 
     maybeSlideLeft: function () {this._maybeSlide(true)},
@@ -250,7 +260,7 @@ Game.prototype = {
         } else {
             this._state.descending = true;
         }
-        console.log('descending:', this._state.descending, 'x:', this.piece.x, 'y:', this.piece.y);
+        // console.log('descending:', this._state.descending, 'x:', this.piece.x, 'y:', this.piece.y);
         return this._state.descending;
     },
 
@@ -393,7 +403,11 @@ Game.prototype = {
     _destroy: function () {
         this._unbindDomEvents();
         delete this.__grue_props.dom_handles;
-        this.ticker.off();
+        this.board.destroy();
+        this.preview.destroy();
+        this.score.destroy();
+        this.bag.destroy();
+        this.ticker.destroy();
     }
 };
 inherit(Game, Component);

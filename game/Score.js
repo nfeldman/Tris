@@ -39,7 +39,7 @@ Score.prototype = {
                     this._totalDisplayed = this.total;
                 this.totalNode.innerHTML = this._totalDisplayed;
             }
-        }), this);
+        }, this).lastRegisteredHandler);
     },
 
     destroy: function () {

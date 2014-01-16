@@ -1,11 +1,11 @@
 /**
  * This module exports 
- *  • the `Piece` constructor, which creates a tetromino
- *  • the `Bag` constructor, which creates an object that manages pieces
+ *  • the `Piece` constructor
+ *  • the `Bag` constructor
  *
  * It also exports the following static objects and functions:
- *  • a `pieces` object, which contains an array of 4 numbers for each piece (or
- *    tetromino), each number representing one orientation of that piece
+ *  • a `pieces` object, which contains an array of 4 numbers for each piece
+ *    (tetromino), each number representing one orientation of that piece
  *  • a `colors` object, which maps the name of a piece to its color
  *  • `eachblock` a function for iterating over the visible blocks of a piece
  *  • `drawPiece` a function for drawing a piece
@@ -35,8 +35,8 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
 
     // I can't easily think in hex or binary, but <http://codeincomplete.com/posts/2011/10/10/javascript_tetris/>
     // cleverly suggests using a number to represent a tetromino in a specific
-    // rotation. Given that a JS numbers are 64bit, I wonder if I can represent
-    // all 4 rotations in a single number?
+    // rotation.
+    // 
     // Until I replace this approach with one that allows implementing SRS more
     // closely and completely, the following logic is to generate each number
     // from an easy to understand visual representation of each piece + rotation.
@@ -168,7 +168,18 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
 exports.pieces = pieces;
 exports.colors = colors;
 
-// accepts a Piece or the properties of one
+/**
+ * a function that iterates over 16 bits of a JS number used
+ * to represent a piece and calls a callback for each on bit.
+ * @static
+ * @param  {string|Piece}   type  either the string name of a piece or an instance of Piece
+ * @param  {number}   [x]       the x coordinate of a piece, not required if type is a Piece instance
+ * @param  {number}   [y]       the y coordinate of a piece, not required if type is a Piece instance
+ * @param  {number}   [dir]     the rotation (0 - 3) of a piece, not required if type is a Piece instance
+ * @param  {Function} fn      the function to call if a block is filled (bit is on) in the piece
+ * @param  {number}   [thisObj] context in which to call the fn
+ * @return {undefined}
+ */
 function eachblock (type, x, y, dir, fn, thisObj) {
     if (type instanceof Piece) {
         thisObj = y;
@@ -196,13 +207,37 @@ function eachblock (type, x, y, dir, fn, thisObj) {
 
 exports.eachblock = eachblock;
 
+/**
+ * Draws a piece
+ * @static
+ * @param  {string} type [description]
+ * @param  {number} x    [description]
+ * @param  {number} y    [description]
+ * @param  {number} dx   [description]
+ * @param  {number} dy   [description]
+ * @param  {number} dir  [description]
+ * @param  {CanvasRenderingContext2D} ctx  [description]
+ * @return {undefined}      [description]
+ */
 function drawPiece (type, x, y, dx, dy, dir, ctx) {
     eachblock(type, x, y, dir, function (x, y) {
-        drawBlock(x, y, dx, dy, type, ctx);
+        drawBlock(type, x, y, dx, dy, ctx);
     });
 }
 exports.drawPiece = drawPiece;
 
+/**
+ * Erases a piece
+ * @static
+ * @param  {string} type [description]
+ * @param  {number} x    [description]
+ * @param  {number} y    [description]
+ * @param  {number} dx   [description]
+ * @param  {number} dy   [description]
+ * @param  {number} dir  [description]
+ * @param  {CanvasRenderingContext2D} ctx  [description]
+ * @return {undefined}      [description]
+ */
 function clearPiece (type, x, y, dx, dy, dir, ctx) {
     eachblock(type, x, y, dir, function (x, y) {
         clearBlock(x, y, dx, dy, ctx);
@@ -210,9 +245,12 @@ function clearPiece (type, x, y, dx, dy, dir, ctx) {
 }
 exports.clearPiece = clearPiece;
 
-function drawBlock (x, y, dx, dy, type, ctx) {
+function drawBlock (type, x, y, dx, dy, ctx) {
     ctx.fillStyle = colors[type];
     ctx.fillRect(x*dx, y*dy, dx, dy);
+
+    if (arguments.callee.caller.caller.caller.caller.name == '')
+        console.log('filling block', x, y);
 
     var xx = dx * .1,
         yy = dy * .1;
@@ -243,11 +281,20 @@ function drawBlock (x, y, dx, dy, type, ctx) {
 exports.drawBlock = drawBlock;
 
 function clearBlock (x, y, dx, dy, ctx) {
+    console.log('clearing block', x, y);
     ctx.clearRect(x*dx, y*dy, dx, dy);
 }
 exports.clearBlock = clearBlock;
 
-
+/**
+ * Creates a Bag object, which provides a random piece name on
+ * demand.
+ * @param {[type]} [generator] a function to use to generate the
+ *                             piece names. The default function
+ *                             is similar to <http://tetrisconcept.net/wiki/Random_Generator>
+ *                             but does not prevent the first
+ *                             piece from being an S or a Z
+ */
 function Bag (generator) {
     EventEmitter.call(this);
     this.pieces = [];
@@ -267,7 +314,7 @@ Bag.prototype.next = function () {
         this.fill();
 
     var next = this.pieces.pop();
-    console.log(next);
+
     this.emitEvent('next', next);
     return next;
 };
@@ -276,7 +323,7 @@ Bag.prototype.preview = function (n) {
     n == null && (n = 1);
     if (n > this.pieces.length)
         this.fill();
-console.log(this.pieces);
+
     return this.pieces.slice(this.pieces.length - n);
 };
 
@@ -305,7 +352,7 @@ Piece.prototype.rotateLeft = function (x) {
         this.r = 3;
     else
         --this.r;
-    console.log(this.r);
+
     return this.r;
 };
 
