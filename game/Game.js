@@ -143,7 +143,6 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     nextPiece: function () {
-        // console.time('nextPiece')
         if (!this.piece)
             this.piece = new pieces.Piece(null, this.dx, this.dy);
 
@@ -160,12 +159,8 @@ mix(/** @lends Game#prototype */{
 
         this.board.refresh();
 
-        if (this.board.willIntersect(this.piece)) {
-            // console.timeEnd('nextPiece')
+        if (this.board.willIntersect(this.piece))
             this.gameOver();
-        } else {
-            // console.timeEnd('nextPiece')
-        }
     },
 
     /**
@@ -327,6 +322,25 @@ mix(/** @lends Game#prototype */{
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
+            if (left) {
+                if (intersects.left) {
+                    ++this.piece.x;
+                    intersects = this.board.willIntersect(this.piece);
+                    if (intersects)
+                        --this.piece.x;
+                    else
+                        return;
+                }
+            } else {
+                if (intersects.right) {
+                    --this.piece.x;
+                    intersects = this.board.willIntersect(this.piece);
+                    if (intersects)
+                        ++this.piece.x;
+                    else
+                        return;
+                }
+            }
             // TODO wall kicks
             if (left)
                 this.piece.rotateRight();

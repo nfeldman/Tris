@@ -227,7 +227,6 @@ mix(/** @lends Board#prototype */ {
     },
 
     _removeRows: function (dict) {
-        console.time('removeRows');
         var field = new Array(this._rows),
             i = this._rows, 
             j = i;
@@ -237,19 +236,12 @@ mix(/** @lends Board#prototype */ {
                 --i;
             field[--j] = this._field[i];
         }
-        // for (var i = 0, j = 0; i < this._rows; i++) {
-        //     while (dict.contains(i))
-        //         ++i;
-
-        //     field[j++] = this._field[i];
-        // }
 
         for (var i = 0, l = dict.length; i < l; i++)
             field[i] = this._emptyRow.slice(0);
 
         this._field = field;
         this.refresh();
-        console.timeEnd('removeRows');
     },
 
     /**
