@@ -7,18 +7,20 @@ var mix = require('../Grue/js/object/mix');
  * Constructs an object for tracking the score in a game.
  */
 function Score () {
-    this.level = 0;
-    this.rows  = 0;
-    this.total = 0;
+    this._level = 0;
+    this.rows   = 0;
+    this.total  = 0;
 
     this._handles = [];
     this._rowsDisplayed  = 0;
     this._totalDisplayed = 0;
+    this.scoring = null;
 
     Object.defineProperties(this, {
         _handles: {enumerable:false},
         _rowsDisplayed: {enumerable:false},
-        _totalDisplayed: {enumerable:false}
+        _totalDisplayed: {enumerable:false},
+        _level: {enumerable: false}
     });
 
     this.ticker = null;
@@ -30,11 +32,22 @@ function Score () {
 
 // add properties to the prototype without overwriting the constructor
 mix(/** @lends Score#prototype */ {
+    set: function (rowsCleared, softDropCt, hardDropCt) {
+        var total = (this.scoring.line_multipliers[rowsCleared - 1] * (this.level + 1)) + softDropCt + (hardDropCt * 2);
+
+        this.total += total;
+        this.rows  += rowsCleared;
+
+        if (1 >= (this.level * 10) / this.rows)
+            ++this.level;
+    },
     /**
-     * Binds event listeners
+     * Sets up the dom and binds event listeners
      * @return {undefined}
      */
     init: function () {
+        this.rowsNode.innerHTML  = 0;
+        this.totalNode.innerHTML = 0;
         this._handles.push(this.ticker.on('draw', function () {
             if (this.rows > this._rowsDisplayed) {
                 ++this._rowsDisplayed;
@@ -61,3 +74,13 @@ mix(/** @lends Score#prototype */ {
             this.ticker.off(this._handles[i]);
     }
 }, Score.prototype);
+
+Object.defineProperty(Score.prototype, 'level', {
+    get: function () {
+        return this._level;
+    },
+    set: function (n) {
+        this._level = n;
+        this.levelNode.innerHTML = n + 1;
+    }
+})

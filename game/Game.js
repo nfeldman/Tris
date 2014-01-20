@@ -344,8 +344,11 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     clearRows: function () {
-        this.board.maybeClearRows(this.piece);
-        this.nextPiece();
+        var rows = this.board.maybeClearRows(this.piece);
+        if (rows)
+            this.score.set(rows, this._counters.softDropped, this._counters.hardDropped);
+        else
+            this.nextPiece();
     },
 
     /**
@@ -432,12 +435,13 @@ mix(/** @lends Game#prototype */{
         // setup score board
         this.score && this.score.destroy();
         this.score = new this.scoreCtor();
-        this.score.totalNode = this.layout.scoreboard.firstElementChild.lastChild;
-        this.score.levelNode = this.layout.scoreboard.firstElementChild.nextElementSibling.lastChild;
-        this.score.rowsNode  = this.layout.scoreboard.lastElementChild.lastChild;
-        this.score.level = this.props.start_level;
+        this.score.scoring   = this.props.scoring;
+        this.score.totalNode = this.layout.scoreboard.lastElementChild.lastChild;
+        this.score.levelNode = this.layout.scoreboard.firstElementChild.lastChild;
+        this.score.rowsNode  = this.layout.scoreboard.firstElementChild.nextElementSibling.lastChild;
         this.score.ticker = this.ticker;
         this.score.init();
+        this.score.level = this.props.start_level;
     },
 
     /** @private */

@@ -176,11 +176,10 @@ mix(/** @lends Board#prototype */ {
             if (this.isRowFilled(rows[i]))
                 occupied.add(rows[i]);
 
-        if (occupied.length) {
+        if (occupied.length)
             this.clearRows(occupied);
-            return true;
-        }
-        return false;
+
+        return occupied.length;
     },
 
     /**
