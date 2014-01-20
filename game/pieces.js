@@ -163,7 +163,26 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
         J: 'blue',
         L: 'orange'
     },
+    // colorByIdx = ' IOTSZJL'.split(''),
+    // colorToIdx = {
+    //     I: 1,
+    //     O: 2,
+    //     T: 3,
+    //     S: 4,
+    //     Z: 5,
+    //     J: 6,
+    //     L: 7
+    // },
     generatePieces = require('./defaultPieceGenerator');
+
+// Object.defineProperties(colors, {
+//     getColor: {
+//         value: function (n) {return this[colorByIdx[n]]}
+//     },
+//     getIdx: {
+//         value: function (l) {return colorToIdx[l]}
+//     }
+// });
 
 exports.pieces = pieces;
 exports.colors = colors;

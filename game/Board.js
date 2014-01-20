@@ -8,17 +8,6 @@ var Component = require('../Grue/js/infrastructure/Component'),
     colors  = pieces.colors,
     eachblock = pieces.eachblock;
 
-/**
- * constructs an object for tracking the properties of a live piece
- * @constructor
- * @private
- */
-function BoardPieceProps () {
-    this.x = 0;
-    this.y = 0;
-    this.r = 0;
-    this.t = '';
-}
 
 /**
  * Constructs the playfield/board used by games like Tetris
@@ -49,7 +38,7 @@ function Board (ticker, rows, cols, dx, dy) {
     /** @private */this._frameCt = 0;
     /** @private */this._actions = [];
 
-    this.refresh(rows, cols, dx, dy);
+    this.reset(rows, cols, dx, dy);
 
     Object.defineProperties(this, {
         _piece: {enumerable: false},
@@ -80,9 +69,9 @@ mix(/** @lends Board#prototype */ {
      * @param {number} dy     how many pixels high a block is on the visible board
      * @return {undefined}
      */
-    refresh: function (rows, cols, dx, dy) {
+    reset: function (rows, cols, dx, dy) {
         this._ctx.clearRect(0, 0, cols * dx, rows * dy);
-        this._piece = new BoardPieceProps();
+        this._piece = new pieces.Piece(null, dx, dy);
 
         this._frameCt = 0;
         this._actions.length = 0;
@@ -106,10 +95,22 @@ mix(/** @lends Board#prototype */ {
         /** @private */this._field = new Array(this._rows);
 
         for (i = 0; i < 10; i++)
-            row[i] = false;
+            row[i] = '';
 
         for (i = 0; i < this._rows; i++)
             this._field[i] = row.slice(0);
+    },
+
+    refresh: function () {
+        var dx  = this._dx,
+            dy  = this._dy,
+            f   = this._field,
+            ctx = this._ctx;
+
+        for (var i = 2, c = this._cols, r = this._rows; i < r; i++) {
+            for (var j = 0; j < c; j++)
+                f[i][j] ? pieces.drawBlock(f[i][j], j, i - 2, dx, dy, ctx) : pieces.clearBlock(j, i - 2, dx, dy, ctx);
+        }
     },
 
     /**
@@ -120,12 +121,12 @@ mix(/** @lends Board#prototype */ {
      * @return {undefined}
      */
     drawPiece: function (piece, dontClear) {
-        !dontClear && this.clearPiece(this._piece.t, this._piece.x, this._piece.y, this._piece.r);
+        !dontClear && this.clearPiece(this._piece.piece, this._piece.x, this._piece.y, this._piece.r);
         this._piece.x = piece.x;
         this._piece.y = piece.y - 2;
         this._piece.r = piece.r;
-        this._piece.t = piece.piece;
-        piece.y >= 0 && pieces.drawPiece(this._piece.t, this._piece.x, this._piece.y, this._dx, this._dy, this._piece.r, this._ctx);
+        this._piece.piece = piece.piece;
+        piece.y >= 0 && pieces.drawPiece(this._piece.piece, this._piece.x, this._piece.y, this._dx, this._dy, this._piece.r, this._ctx);
     },
 
     /**
@@ -269,11 +270,13 @@ mix(/** @lends Board#prototype */ {
      * @return {undefined}
      */
     occupy: function (piece) {
-        var outOfBounds = false;
+        var outOfBounds = false,
+            l = piece.piece;
+
         eachblock(piece, function (x, y) {
             if (0 > y || y >= this.cols)
                 return outOfBounds = true;
-            this._field[y][x] = true;
+            this._field[y][x] = l;
         }, this);
 
         outOfBounds && this.emitEvent('outOfBounds', true);
@@ -282,7 +285,7 @@ mix(/** @lends Board#prototype */ {
     toString: function () {
         return this._field.map(function (row, i) {
             return [i].concat(row.map(function (cell) {
-                return cell ? '#' : ' ';
+                return cell ? cell : ' ';
             })).join('');
         }).join('\n');
     }

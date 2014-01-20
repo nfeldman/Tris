@@ -29,6 +29,7 @@ function GameState () {
  */
 function GameCounters () {
     this.traveled    = 0;
+    this.motionless  = 0;
     this.slideFrames = 0;
     this.softDropped = 0;
     this.hardDropped = 0;
@@ -50,7 +51,7 @@ function Game () {
     this.scoreCtor = null;
     this.previewCtor = null;
 
-    // these are set/reset by Game#refresh (first called by Game#init)
+    // these are set/reset by Game#reset (first called by Game#init)
     this._state    = new GameState();
     this._counters = new GameCounters();
     this._piecesSeen = 0;
@@ -59,13 +60,15 @@ function Game () {
     this.preview = null;
     this.dx = 0;
     this.dy = 0;
-    this.piece = null;
+    this.piece  = null;
+    this._piece = new pieces.Piece(null, this.dx, this.dy);
 
     Object.defineProperties(this, {
         _state: {enumerable:false},
         _counters: {enumerable:false},
         _piecesSeen: {enumerable:false},
-        _actions: {enumerable:false}
+        _actions: {enumerable:false},
+        _piece: {enumerable:false}
     });
 }
 
@@ -103,7 +106,7 @@ mix(/** @lends Game#prototype */{
      * Resets the state of all components
      * @return {undefined}
      */
-    refresh: function () {
+    reset: function () {
         var p = this.props;
 
         this.dx = p.cellsize_x || p.cellsize,
@@ -129,7 +132,7 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     init: function () {
-        this.refresh();
+        this.reset();
         this.layout.playfield.appendChild(this.board.canvas);
         this._bindEvents();
         this._bindDomEvents();
@@ -140,18 +143,29 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     nextPiece: function () {
+        console.time('nextPiece')
         if (!this.piece)
             this.piece = new pieces.Piece(null, this.dx, this.dy);
 
         var piece = this.bag.next();
         pieces.Piece.call(this.piece, piece, this.dx, this.dy);
-        ++this.piecesSeen;
+        pieces.Piece.call(this._piece, piece, this.dx, this.dy);
+        ++this._piecesSeen;
 
         GameCounters.call(this._counters);
 
         this._state.pieceIsNew = true;
         this._state.descending = true;
         this._state.sliding    = true;
+
+        this.board.refresh();
+
+        if (this.board.willIntersect(this.piece)) {
+            console.timeEnd('nextPiece')
+            this.gameOver();
+        } else {
+            console.timeEnd('nextPiece')
+        }
     },
 
     /**
@@ -161,34 +175,16 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     update: function (e) {
-        if (this._state.suspended)
+        if (this._state.suspended || this._state.ended)
             return;
 
         var speed   = this.score.level > 15 ? 0 : Math.floor(Math.log(15 - this.score.level) * 40),
             actions = this._actions.slice(0);
         this._actions.length = 0;
-        this._counters.traveled += speed ? 10/speed : 1;
+        this._counters.traveled += (speed ? 10/speed : 1);
 
         // skip rerendering if nothing has changed
         this._state.rendering = actions.length || this._counters.traveled >= 1;
-
-        if (this._state.descending) {
-            if (this._counters.traveled >= 1)
-                this.maybeSlideDown();
-        } else if (this._state.sliding) {
-            if (!this._counters.slideFrames) {
-                if (this.piece.y) {
-                    this.board.occupy(this.piece);
-                    this._actions.push(Game.ACTIONS.CLEAR);
-                    this._counters.slideFrames = 60 - this.score.level;
-                } else {
-                    this.gameOver();
-                }
-                this._state.sliding = false;
-            } else {
-                --this._counters.slideFrames;
-            }
-        }
 
         for (var i = 0; i < actions.length; i++) {
             switch (actions[i]) {
@@ -201,6 +197,33 @@ mix(/** @lends Game#prototype */{
                 case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
             }
         }
+
+        if (this._state.descending) {
+            if (this._counters.traveled >= 1)
+                this.maybeSlideDown();
+        } else if (this._state.sliding) {
+            // if the user doesn't slide within 20 frames, lock the piece
+            if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y && this.piece.r == this._piece.r)
+                ++this._counters.motionless;
+            else
+                this._counters.motionless = 0;
+
+            this._piece.x = this.piece.x;
+            this._piece.y = this.piece.y;
+            this._piece.r = this.piece.r;
+
+            if (!this._counters.slideFrames || this._counters.motionless > 19) {
+                if (this.piece.y) {
+                    this.board.occupy(this.piece);
+                    this._actions.push(Game.ACTIONS.CLEAR);
+                } else {
+                    this.gameOver();
+                }
+                this._state.sliding = false;
+            } else {
+                --this._counters.slideFrames;
+            }
+        }
     },
 
     /**
@@ -209,8 +232,9 @@ mix(/** @lends Game#prototype */{
      */
     gameOver: function () {
         this.togglePlay();
+        this._state.ended = true;
         alert('Game Over!');
-        this.newGame();
+        // this.newGame();
     },
 
     /**
@@ -236,10 +260,10 @@ mix(/** @lends Game#prototype */{
     maybeSlideDown: function (soft) {
         if (!this._state.descending)
             return;
-        ++this.piece.y;
+
         this._counters.traveled = 0;
-        if (!this.maybeToggleDescent())
-            --this.piece.y;
+        if (this.maybeToggleDescent())
+            ++this.piece.y;
         else if (soft)
             ++this._counters.softDropped;
     },
@@ -293,9 +317,9 @@ mix(/** @lends Game#prototype */{
             else
                 --this.piece.x;
         }
-        ++this.piece.y;
-        this.maybeToggleDescent();
-        --this.piece.y;
+
+        if (!this._state.descending)
+            this.maybeToggleDescent();
     },
 
     /** @private */
@@ -308,6 +332,8 @@ mix(/** @lends Game#prototype */{
                 this.piece.rotateRight();
             else
                 this.piece.rotateLeft();
+        } else if (!this._state.descending) {
+            this.maybeToggleDescent();
         }
     },
 
@@ -329,11 +355,14 @@ mix(/** @lends Game#prototype */{
      * @return {boolean} whether the piece is still descending
      */
     maybeToggleDescent: function () {
+        ++this.piece.y;
         var intersects = this.board.willIntersect(this.piece);
+        --this.piece.y;
+
         if (intersects) {
             if (this._state.descending) {
                 this._state.descending = false;
-                this._counters.slideFrames = 60 - this.score.level;
+                this._counters.slideFrames = 40 - (this.score.level * 2);
             }
         } else {
             this._state.descending = true;
@@ -348,8 +377,9 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     render: function (e) {
-        if (!this._state.rendering)
+        if (!this._state.rendering || this._state.ended)
             return;
+
         this.board.drawPiece(this.piece, this._state.pieceIsNew);
         this._state.pieceIsNew && (this._state.pieceIsNew = false);
     },
@@ -393,7 +423,7 @@ mix(/** @lends Game#prototype */{
         // if (this._state.playing) {
         //     this.togglePlay();
         // } else {
-            this.refresh();
+            this.reset();
         // }
     },
 
@@ -413,7 +443,7 @@ mix(/** @lends Game#prototype */{
     /** @private */
     _newPlayField: function () {
         if (this.board)
-            return this.board.refresh(this.props.rows, this.props.cols, this.dx, this.dy);
+            return this.board.reset(this.props.rows, this.props.cols, this.dx, this.dy);
 
         this.board = new Board(this.ticker, this.props.rows, this.props.cols, this.dx, this.dy);
     },
@@ -423,7 +453,7 @@ mix(/** @lends Game#prototype */{
         this.__grue_props.grue_handles = [];
         this.__grue_props.grue_handles.push(this.ticker.on('tick', this.update, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.ticker.on('draw', this.render, this).lastRegisteredHandler);
-        this.__grue_props.grue_handles.push(this.board.on('outOfBounds', function () {debugger;this.gameOver()}, this).lastRegisteredHandler);
+        this.__grue_props.grue_handles.push(this.board.on('outOfBounds', this.gameOver, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.board.on('animating', function (e) {
             this._state.suspended = e;
         }, this));
@@ -445,13 +475,16 @@ mix(/** @lends Game#prototype */{
                 this.togglePlay();
                 this.board.canvas.focus();
             } else if (target.name == 'new') {
-                this.refresh();
+                this.reset();
             } else if (target.name == 'options') {
 
             }
         }, false, this);
 
         this.on(this.layout.root, 'keydown', function (e) {
+            if (this._state.ended)
+                return;
+
             var props = this.props.controls,
                 that  = this;
 
