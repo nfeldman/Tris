@@ -1,3 +1,6 @@
+/**  @module tris/game/Board */
+module.exports = Board;
+
 var Component = require('../Grue/js/infrastructure/Component'),
     inherit = require('../Grue/js/OO/inherit'),
     pieces  = require('pieces'),
@@ -5,31 +8,46 @@ var Component = require('../Grue/js/infrastructure/Component'),
     colors  = pieces.colors,
     eachblock = pieces.eachblock;
 
-
+/**
+ * constructs an object for tracking the properties of a live piece
+ * @constructor
+ * @private
+ */
 function BoardPieceProps () {
     this.x = 0;
     this.y = 0;
     this.r = 0;
     this.t = '';
 }
-// # Playfield
-// The Tetris Guideline specifies a playfield 10 blocks wide by at least 22
-// blocks tall, where the tetrominoes are started in rows 21 and 22.
-// Most games hide rows 21 and up. Tetrominoes may land and lock partially
-// within the "vanish zone"; they reappear once a line is cleared below them.
 
+/**
+ * Constructs the playfield/board used by games like Tetris
+ * The Tetris Guideline specifies a playfield 10 blocks wide by at least 22
+ * blocks tall, where the tetrominoes are started in rows 21 and 22.
+ * Most games hide rows 21 and up. Tetrominoes may land and lock partially
+ * within the "vanish zone"; they reappear once a line is cleared below them.
+ *
+ * @constructor
+ * 
+ * @param {Ticker} ticker Game loop object that emits `tick` and `draw` events
+ * @param {number} rows   How many rows in the visible board. Two additional
+ *                        rows are added internally.
+ * @param {number} cols   how many columns in the board
+ * @param {number} dx     how many pixels wide a block is on the visible board
+ * @param {number} dy     how many pixels high a block is on the visible board
+ */
 function Board (ticker, rows, cols, dx, dy) {
     Component.apply(this);
-    this.__grue_props.use_event_pool = true;
+    /** @private */this.__grue_props.use_event_pool = true;
 
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute('tabindex', '-1');
-    this._ctx = this.canvas.getContext('2d');
+    /** @private */this._ctx = this.canvas.getContext('2d');
 
-    this._piece = null;
-    this.ticker = ticker;
-    this._frameCt = 0;
-    this._actions = [];
+    /** @private */this._piece = null;
+    /** @private */this.ticker = ticker;
+    /** @private */this._frameCt = 0;
+    /** @private */this._actions = [];
 
     this.refresh(rows, cols, dx, dy);
 
@@ -46,12 +64,22 @@ function Board (ticker, rows, cols, dx, dy) {
     });
 }
 
-mix({ // add properties to the prototype without overwriting the constructor
+// add properties to the prototype without overwriting the constructor
+mix(/** @lends Board#prototype */ {
     publishes: Object.create(Component.prototype.publishes, {
         animating  : {value: true},
         rowsCleared: {value: true},
         outOfBounds: {value: true}
     }),
+    /**
+     * Reset the board to a clean state
+     * @param {number} rows   How many rows in the visible board. Two additional
+     *                        rows are added internally.
+     * @param {number} cols   how many columns in the board
+     * @param {number} dx     how many pixels wide a block is on the visible board
+     * @param {number} dy     how many pixels high a block is on the visible board
+     * @return {undefined}
+     */
     refresh: function (rows, cols, dx, dy) {
         this._ctx.clearRect(0, 0, cols * dx, rows * dy);
         this._piece = new BoardPieceProps();
@@ -63,7 +91,7 @@ mix({ // add properties to the prototype without overwriting the constructor
         this.canvas.width  = /*this.buffer.width  = */cols * dx;
         this.canvas.height = /*this.buffer.height = */rows * dy;
 
-        this._rows = rows + 2; // allows new pieces to be partially visible
+        /** @private */this._rows = rows + 2; // allows new pieces to be partially visible
 
         // using the array constructor looks weird
         // but it makes sense when you know the size
@@ -71,11 +99,11 @@ mix({ // add properties to the prototype without overwriting the constructor
         var row = new Array(cols),
             i;
 
-        this._cols = cols;
-        this._dx = dx;
-        this._dy = dy;
+        /** @private */this._cols = cols;
+        /** @private */this._dx = dx;
+        /** @private */this._dy = dy;
 
-        this._field = new Array(this._rows);
+        /** @private */this._field = new Array(this._rows);
 
         for (i = 0; i < 10; i++)
             row[i] = false;
@@ -84,9 +112,15 @@ mix({ // add properties to the prototype without overwriting the constructor
             this._field[i] = row.slice(0);
     },
 
+    /**
+     * Draw a piece
+     * @param  {Piece} piece      The piece to draw
+     * @param  {boolean} [dontClear=false] if true, the result of the last call
+     *                                     to `drawPiece` won't be undone.
+     * @return {undefined}
+     */
     drawPiece: function (piece, dontClear) {
-        console.log(piece.piece);
-        !dontClear && this.clearLastPiece(this._piece.t, this._piece.x, this._piece.y, this._piece.r);
+        !dontClear && this.clearPiece(this._piece.t, this._piece.x, this._piece.y, this._piece.r);
         this._piece.x = piece.x;
         this._piece.y = piece.y - 2;
         this._piece.r = piece.r;
@@ -94,10 +128,23 @@ mix({ // add properties to the prototype without overwriting the constructor
         piece.y >= 0 && pieces.drawPiece(this._piece.t, this._piece.x, this._piece.y, this._dx, this._dy, this._piece.r, this._ctx);
     },
 
-    clearLastPiece: function (t, x, y, r) {
+    /**
+     * Clears a piece from the board
+     * @param  {string} t Type of piece
+     * @param  {number} x x coordinate of piece
+     * @param  {number} y y coordinate of piece
+     * @param  {number} r rotation of piece
+     * @return {undefined}
+     */
+    clearPiece: function (t, x, y, r) {
         pieces.clearPiece(t, x, y, this._dx, this._dy, r, this._ctx);
     },
 
+    /**
+     * Checks whether a row is filled
+     * @param  {number}  idx The index of the row to check
+     * @return {Boolean} whether the row is filled
+     */
     isRowFilled: function (idx) {
         for (var i = 0, l = this._cols; i < l; i++)
             if (!this._field[idx][i])
@@ -105,6 +152,11 @@ mix({ // add properties to the prototype without overwriting the constructor
         return true;
     },
 
+    /**
+     * Calls Board#clearRows if the supplied piece occupies filled rows
+     * @param  {Piece}
+     * @return {Boolean} whether rows will be cleared
+     */
     maybeClearRows: function (piece) {
         var rows     = [],
             occupied = [];
@@ -122,6 +174,11 @@ mix({ // add properties to the prototype without overwriting the constructor
         return false;
     },
 
+    /**
+     * Sets up and begins clearing rows.
+     * @param  {Array} rows the indicies of rows to clear
+     * @return {[type]}      [description]
+     */
     clearRows: function (rows) {
         if (!rows.length)
             throw Error('No rows to clear');
@@ -155,10 +212,26 @@ mix({ // add properties to the prototype without overwriting the constructor
     // frames 6  - 10, reverse
     // frames 11 - 15 reverse again
     // frame 16 draw cleaned board
+    /**
+     * Does the row clearing animation
+     * @param  {number} idx the index of the row to clear
+     * @param  {number} ct  the number of contiguous rows in addition to that 
+     *                      at `idx` to clear.
+     * @return {undefined}
+     */
     flashRows: function (idx, ct) {
         var imgData = this._ctx.getImageData(0, idx * this._dy, this._dx * this._cols, this._dy * ct);
     },
 
+    /**
+     * Checks whether any block of the supplied piece will intersect an occupied
+     * block of this board.
+     * @param  {Piece} piece
+     * @return {Object|null} If not null, contains the x and y coordinates of 
+     *                          the first occupied block and whether the
+     *                          intersection occurs to the left, right, or
+     *                          bottom of the piece.
+     */
     willIntersect: function (piece) {
         var result = null;
         eachblock(piece, function (x, y) {
@@ -176,12 +249,25 @@ mix({ // add properties to the prototype without overwriting the constructor
         return result;
     },
 
+    /**
+     * Checks whether a block is occupied
+     * @param  {number}  x x coordinate of the block
+     * @param  {number}  y y coordinate of the block
+     * @return {Boolean}
+     */
     isCellOccupied: function (x, y) {
         if (this._field[y] == null || this._field[y][x] == null)
             return true;
         return this._field[y][x];
     },
 
+    /**
+     * Given a piece, marks all of the blocks it fills as occupied
+     * @fires Board#outOfBounds if the piece has a block with a negative y
+     *                          coordinate
+     * @param  {Piece} piece
+     * @return {undefined}
+     */
     occupy: function (piece) {
         var outOfBounds = false;
         eachblock(piece, function (x, y) {
@@ -203,4 +289,3 @@ mix({ // add properties to the prototype without overwriting the constructor
 }, Board.prototype);
 
 inherit(Board, Component);
-module.exports = Board;

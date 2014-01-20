@@ -1,8 +1,6 @@
 var inherit = require('../Grue/js/OO/inherit'),
-    // EventEmitter = require('../Grue/infrastructure/EventEmitter'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
-    // throttle = require('../Grue/js/utils/throttle'),
     mix = require('../Grue/js/object/mix'),
     Board  = require('Board'),
     pieces = require('pieces');
@@ -36,6 +34,10 @@ function GameCounters () {
     this.hardDropped = 0;
 }
 
+/**
+ * Manages a game, its objects, and their lifecycles.
+ * @constructor
+ */
 function Game () {
     Component.apply(this, arguments);
 
@@ -67,6 +69,12 @@ function Game () {
     });
 }
 
+/**
+ * Actions to take
+ * @static
+ * @enum {number}
+ * @type {Object}
+ */
 Game.ACTIONS = {
     LEFT: 1,
     RIGHT: 2,
@@ -79,14 +87,22 @@ Game.ACTIONS = {
 
 Object.defineProperty(Game, 'ACTIONS', {enumerable:false});
 
-Game.prototype = {
-    constructor: Game,
+// add properties to the prototype without overwriting the constructor
+mix(/** @lends Game#prototype */{
+    /** 
+     * A convention follwed by Grue Components, advertises what events are will
+     * be emitted by a Game object.
+     */
     publishes: Object.create(Component.prototype.publishes, {
         levelup: {value:true},
         scoreChange: {value:true},
         playing: {value:true}
     }),
 
+    /**
+     * Resets the state of all components
+     * @return {undefined}
+     */
     refresh: function () {
         var p = this.props;
 
@@ -106,16 +122,23 @@ Game.prototype = {
         this.bag.reset().fill();
     },
 
+    /**
+     * Should only be called once after `this.layout`, `this.bag`, `this.board`,
+     * `this.props`, `this.ticker`, `this.scoreCtor`,  and `this.previewCtor`
+     * have been set. Finishes setting up the DOM and performs event binding.
+     * @return {undefined}
+     */
     init: function () {
         this.refresh();
-        this.board.on('animating', function (e) {
-            this._state.suspended = e;
-        }, this);
         this.layout.playfield.appendChild(this.board.canvas);
         this._bindEvents();
         this._bindDomEvents();
     },
 
+    /**
+     * Gets the next piece, increments the count of seen pieces, updates flags
+     * @return {undefined}
+     */
     nextPiece: function () {
         if (!this.piece)
             this.piece = new pieces.Piece(null, this.dx, this.dy);
@@ -131,6 +154,12 @@ Game.prototype = {
         this._state.sliding    = true;
     },
 
+    /**
+     * Deals with updating the piece's position and whether it is moveable on
+     * each tick of the game loop
+     * @param  {GrueEvent} e
+     * @return {undefined}
+     */
     update: function (e) {
         if (this._state.suspended)
             return;
@@ -141,7 +170,7 @@ Game.prototype = {
         this._counters.traveled += speed ? 10/speed : 1;
 
         // skip rerendering if nothing has changed
-        // this._state.rendering = actions.length || this._counters.traveled >= 1;
+        this._state.rendering = actions.length || this._counters.traveled >= 1;
 
         if (this._state.descending) {
             if (this._counters.traveled >= 1)
@@ -174,16 +203,36 @@ Game.prototype = {
         }
     },
 
+    /**
+     * End of game logic. Stops the game, alerts the user, and call Game#newGame
+     * @return {undefined}
+     */
     gameOver: function () {
         this.togglePlay();
         alert('Game Over!');
         this.newGame();
     },
 
+    /**
+     * Slides the piece left if the translation won't result in the piece
+     * intersecting with an occupied block
+     * @return {undefined}
+     */
     maybeSlideLeft: function () {this._maybeSlide(true)},
 
+    /**
+     * Slides the piece right if the translation won't result in the piece
+     * intersecting with an occupied block
+     * @return {undefined}
+     */
     maybeSlideRight: function () {this._maybeSlide(false)},
 
+    /**
+     * Drops the piece one row if the drop won't cause the piece to intersect an
+     * occupied row. @see Game#maybeToggleDescent
+     * @param  {boolean} soft if this is a soft drop (triggered by down key)
+     * @return {undefined}
+     */
     maybeSlideDown: function (soft) {
         if (!this._state.descending)
             return;
@@ -195,6 +244,10 @@ Game.prototype = {
             ++this._counters.softDropped;
     },
 
+    /**
+     * Drops the piece to the lowest unoccupied row and locks it in place
+     * @return {undefined}
+     */
     hardDrop: function () {
         var rows = 0,
             intersects;
@@ -205,17 +258,28 @@ Game.prototype = {
         --rows;
 
         this._counters.hardDropped = rows;
-        this._counters.slideFrames = 0;
+        this._counters.slideFrames = 0; // prevent sliding
     },
 
+    /**
+     * Rotates the piece left if the rotation won't result in the piece
+     * intersecting with an occupied block
+     * @return {undefined}
+     */
     maybeRotateLeft: function () {
         this._maybeRotate(true);
     },
 
+    /**
+     * Rotates the piece right if the rotation won't result in the piece
+     * intersecting with an occupied block
+     * @return {undefined}
+     */
     maybeRotateRight: function () {
         this._maybeRotate(false);
     },
 
+    /** @private */
     _maybeSlide: function (left) {
         if (left)
             --this.piece.x;
@@ -234,6 +298,7 @@ Game.prototype = {
         --this.piece.y;
     },
 
+    /** @private */
     _maybeRotate: function (left) {
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
         var intersects = this.board.willIntersect(this.piece);
@@ -246,11 +311,23 @@ Game.prototype = {
         }
     },
 
+    /**
+     * Asks this.board to clear the rows this.piece occupies. If this.board
+     * returns false, calls this.nextPiece. (If the board does need to clear
+     * rows, it will emit an `animating` event)
+     * @return {undefined}
+     */
     clearRows: function () {
         if (!this.board.maybeClearRows(this.piece))
             this.nextPiece();
     },
 
+    /**
+     * Asks this.board whether this.piece will intersect a filled block. If it
+     * will, sets the descending flag to false and sets the counter of frames
+     * during which the piece is permitted to slide.
+     * @return {boolean} whether the piece is still descending
+     */
     maybeToggleDescent: function () {
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
@@ -265,13 +342,22 @@ Game.prototype = {
         return this._state.descending;
     },
 
+    /**
+     * Tells the board to draw the piece
+     * @param  {GrueEvent} e
+     * @return {undefined}
+     */
     render: function (e) {
         if (!this._state.rendering)
             return;
         this.board.drawPiece(this.piece, this._state.pieceIsNew);
         this._state.pieceIsNew && (this._state.pieceIsNew = false);
     },
-    // override Component#on to handle dom event and grue event binding
+
+    /**
+     * overrides Component#on to handle both dom and grue event binding
+     * @return {this}
+     */
     on: function () {
         !this.__grue_props.dom_handles && (this.__grue_props.dom_handles = []);
         try {
@@ -282,6 +368,11 @@ Game.prototype = {
         return this;
     },
 
+    /**
+     * Toggles the game loop, updates the `playing` flag, 
+     * and emits a `playing` event.
+     * @return {this}
+     */
     togglePlay: function () {
         this._state.playing = !this._state.playing;
         if (this._state.initial) {
@@ -290,8 +381,13 @@ Game.prototype = {
         }
         this.ticker.toggle();
         this.emitEvent('playing', this._state.playing);
+        return this;
     },
 
+    /**
+     * reset everything to a clean state
+     * @return {[type]} [description]
+     */
     newGame: function () {
         // TODO pause and prompt if game hasn't ended
         // if (this._state.playing) {
@@ -301,6 +397,7 @@ Game.prototype = {
         // }
     },
 
+    /** @private */
     _newScoreBoard: function () {
         // setup score board
         this.score && this.score.destroy();
@@ -313,6 +410,7 @@ Game.prototype = {
         this.score.init();
     },
 
+    /** @private */
     _newPlayField: function () {
         if (this.board)
             return this.board.refresh(this.props.rows, this.props.cols, this.dx, this.dy);
@@ -320,13 +418,18 @@ Game.prototype = {
         this.board = new Board(this.ticker, this.props.rows, this.props.cols, this.dx, this.dy);
     },
 
+    /** @private */
     _bindEvents: function () {
         this.__grue_props.grue_handles = [];
         this.__grue_props.grue_handles.push(this.ticker.on('tick', this.update, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.ticker.on('draw', this.render, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.board.on('outOfBounds', function () {debugger;this.gameOver()}, this).lastRegisteredHandler);
+        this.__grue_props.grue_handles.push(this.board.on('animating', function (e) {
+            this._state.suspended = e;
+        }, this));
     },
 
+    /** @private */
     _bindDomEvents: function () {
         var that = this,
             handles = this.__grue_props.dom_handles;
@@ -383,6 +486,7 @@ Game.prototype = {
         }, false, this);
     },
 
+    /** @private */
     _unbindDomEvents: function () {
         var handles = this.__grue_props.dom_handles;
 
@@ -396,6 +500,7 @@ Game.prototype = {
         delete this.__grue_props.dom_handles;
     },
 
+    /** @private */
     _destroy: function () {
         this._unbindDomEvents();
         delete this.__grue_props.dom_handles;
@@ -410,5 +515,5 @@ Game.prototype = {
         this.bag.destroy();
         this.ticker.destroy();
     }
-};
+}, Game.prototype);
 inherit(Game, Component);

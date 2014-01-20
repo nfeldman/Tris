@@ -1,11 +1,15 @@
-var mix = require('../Grue/js/object/mix');
-
+/**  @module tris/game/Score */
 module.exports = Score;
 
+var mix = require('../Grue/js/object/mix');
+
+/**
+ * Constructs an object for tracking the score in a game.
+ */
 function Score () {
-    this._level = 0;
-    this._rows  = 0;
-    this._total = 0;
+    this.level = 0;
+    this.rows  = 0;
+    this.total = 0;
 
     this._handles = [];
     this._rowsDisplayed  = 0;
@@ -24,7 +28,12 @@ function Score () {
     this.totalNode = null;
 };
 
-mix({ // add properties to the prototype without overwriting the constructor{
+// add properties to the prototype without overwriting the constructor
+mix(/** @lends Score#prototype */ {
+    /**
+     * Binds event listeners
+     * @return {undefined}
+     */
     init: function () {
         this._handles.push(this.ticker.on('draw', function () {
             if (this.rows > this._rowsDisplayed) {
@@ -43,6 +52,10 @@ mix({ // add properties to the prototype without overwriting the constructor{
         }, this).lastRegisteredHandler);
     },
 
+    /**
+     * Unbinds event listeners
+     * @return {undefined}
+     */
     destroy: function () {
         for (var i = 0; i < this._handles.length; i++)
             this.ticker.off(this._handles[i]);

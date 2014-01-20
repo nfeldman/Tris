@@ -1,5 +1,6 @@
 var pieces = require('pieces');
 
+/**  @module tris/game/Preivew */
 module.exports = Preview;
 
 /**
