@@ -192,11 +192,12 @@ function eachblock (type, x, y, dir, fn, thisObj) {
 
     var row = 0,
         col = 0,
-        piece = pieces[type][dir];
+        piece = pieces[type][dir],
+        stop = false;
 
-    for (var bit = 0x8000;  bit > 0; bit >>= 1) {
+    for (var bit = 0x8000;  !stop && bit > 0; bit >>= 1) {
         if (piece & bit)
-            fn.call(thisObj, x + col, y + row);
+            stop = fn.call(thisObj, x + col, y + row);
 
         if (++col == 4) {
             col = 0;
@@ -249,8 +250,8 @@ function drawBlock (type, x, y, dx, dy, ctx) {
     ctx.fillStyle = colors[type];
     ctx.fillRect(x*dx, y*dy, dx, dy);
 
-    if (arguments.callee.caller.caller.caller.caller.name == '')
-        console.log('filling block', x, y);
+    // if (arguments.callee.caller.caller.caller.caller.name == '')
+    //     console.log('filling block', x, y);
 
     var xx = dx * .1,
         yy = dy * .1;
@@ -281,7 +282,7 @@ function drawBlock (type, x, y, dx, dy, ctx) {
 exports.drawBlock = drawBlock;
 
 function clearBlock (x, y, dx, dy, ctx) {
-    console.log('clearing block', x, y);
+    // console.log('clearing block', x, y);
     ctx.clearRect(x*dx, y*dy, dx, dy);
 }
 exports.clearBlock = clearBlock;

@@ -25,7 +25,7 @@ function Preview () {
 
 Preview.prototype = {
     constructor: Preview,
-    draw: function drawPreview () {
+    draw: function () {
         var n = this._showNextCt,
             next = this.bag.preview(n),
             x = 0,
@@ -71,6 +71,9 @@ Preview.prototype = {
 
             pieces.drawPiece(nxt, x, y, 20, 20, 0, this.ctx);
         }
+    },
+    clear: function () {
+        this.ctx.clearRect(0, 0, this._w, this._h);
     }
 };
 

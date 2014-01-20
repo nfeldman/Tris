@@ -1,3 +1,5 @@
+var mix = require('../Grue/js/object/mix');
+
 module.exports = Score;
 
 function Score () {
@@ -22,8 +24,7 @@ function Score () {
     this.totalNode = null;
 };
 
-Score.prototype = {
-    constructor: Score,
+mix({ // add properties to the prototype without overwriting the constructor{
     init: function () {
         this._handles.push(this.ticker.on('draw', function () {
             if (this.rows > this._rowsDisplayed) {
@@ -46,4 +47,4 @@ Score.prototype = {
         for (var i = 0; i < this._handles.length; i++)
             this.ticker.off(this._handles[i]);
     }
-};
+}, Score.prototype);

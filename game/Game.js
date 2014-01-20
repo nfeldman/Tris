@@ -3,6 +3,7 @@ var inherit = require('../Grue/js/OO/inherit'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     // throttle = require('../Grue/js/utils/throttle'),
+    mix = require('../Grue/js/object/mix'),
     Board  = require('Board'),
     pieces = require('pieces');
 
@@ -32,7 +33,7 @@ function GameCounters () {
     this.traveled    = 0;
     this.slideFrames = 0;
     this.softDropped = 0;
-    this.hardDropped = 0;   
+    this.hardDropped = 0;
 }
 
 function Game () {
@@ -52,7 +53,7 @@ function Game () {
     this._counters = new GameCounters();
     this._piecesSeen = 0;
     this._actions = [];
-    this.score = null;
+    this.score   = null;
     this.preview = null;
     this.dx = 0;
     this.dy = 0;
@@ -88,8 +89,8 @@ Game.prototype = {
 
     refresh: function () {
         var p = this.props;
-        
-        this.dx = p.cellsize_x || p.cellsize, 
+
+        this.dx = p.cellsize_x || p.cellsize,
         this.dy = p.cellsize_y || p.cellsize;
 
         this._piecesSeen = 0;
@@ -100,12 +101,17 @@ Game.prototype = {
 
         this._newScoreBoard();
         this._newPlayField();
+        this.preview.clear();
         // generate the pieces
         this.bag.reset().fill();
     },
 
     init: function () {
         this.refresh();
+        this.board.on('animating', function (e) {
+            this._state.suspended = e;
+        }, this);
+        this.layout.playfield.appendChild(this.board.canvas);
         this._bindEvents();
         this._bindDomEvents();
     },
@@ -115,11 +121,10 @@ Game.prototype = {
             this.piece = new pieces.Piece(null, this.dx, this.dy);
 
         var piece = this.bag.next();
-        // console.log('next piece:', piece);
         pieces.Piece.call(this.piece, piece, this.dx, this.dy);
-        this.piece.x = this.piece.y = 0;
-        GameCounters.call(this._counters);
         ++this.piecesSeen;
+
+        GameCounters.call(this._counters);
 
         this._state.pieceIsNew = true;
         this._state.descending = true;
@@ -130,23 +135,23 @@ Game.prototype = {
         if (this._state.suspended)
             return;
 
-        var speed = this.score.level > 10 ? 0 : Math.floor(Math.log(10 - this.score.level) * 500),
+        var speed   = this.score.level > 15 ? 0 : Math.floor(Math.log(15 - this.score.level) * 40),
             actions = this._actions.slice(0);
         this._actions.length = 0;
         this._counters.traveled += speed ? 10/speed : 1;
 
         // skip rerendering if nothing has changed
-        this._state.rendering = actions.length || this._counters.traveled >= 1;
-
+        // this._state.rendering = actions.length || this._counters.traveled >= 1;
 
         if (this._state.descending) {
             if (this._counters.traveled >= 1)
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
             if (!this._counters.slideFrames) {
-                if (~this.piece.x && ~this.piece.y) {
+                if (this.piece.y) {
                     this.board.occupy(this.piece);
                     this._actions.push(Game.ACTIONS.CLEAR);
+                    this._counters.slideFrames = 60 - this.score.level;
                 } else {
                     this.gameOver();
                 }
@@ -186,7 +191,7 @@ Game.prototype = {
         this._counters.traveled = 0;
         if (!this.maybeToggleDescent())
             --this.piece.y;
-        else
+        else if (soft)
             ++this._counters.softDropped;
     },
 
@@ -197,11 +202,8 @@ Game.prototype = {
         while (++rows, this._state.descending)
             this.maybeSlideDown();
 
-        intersects = this.board.willIntersect(this.piece);
-        if (intersects) {
-            --this.piece.y;
-            --rows;
-        }
+        --rows;
+
         this._counters.hardDropped = rows;
         this._counters.slideFrames = 0;
     },
@@ -215,28 +217,26 @@ Game.prototype = {
     },
 
     _maybeSlide: function (left) {
-        var intersects;
         if (left)
             --this.piece.x;
         else
             ++this.piece.x;
-        intersects = this.board.willIntersect(this.piece);
+
+        var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
             if (left)
                 ++this.piece.x;
             else
                 --this.piece.x;
         }
+        ++this.piece.y;
         this.maybeToggleDescent();
+        --this.piece.y;
     },
 
     _maybeRotate: function (left) {
-        if (!this._state.descending)
-            return;
-
-        var intersects;
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
-        intersects = this.board.willIntersect(this.piece);
+        var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
             // TODO wall kicks
             if (left)
@@ -244,7 +244,6 @@ Game.prototype = {
             else
                 this.piece.rotateLeft();
         }
-        this.maybeToggleDescent();
     },
 
     clearRows: function () {
@@ -255,12 +254,14 @@ Game.prototype = {
     maybeToggleDescent: function () {
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
-            this._state.descending = false;
-            this._counters.slideFrames = 60 - this.score.level;
+            if (this._state.descending) {
+                this._state.descending = false;
+                this._counters.slideFrames = 60 - this.score.level;
+            }
         } else {
             this._state.descending = true;
         }
-        // console.log('descending:', this._state.descending, 'x:', this.piece.x, 'y:', this.piece.y);
+
         return this._state.descending;
     },
 
@@ -313,22 +314,17 @@ Game.prototype = {
     },
 
     _newPlayField: function () {
-        this.board && this.board.destroy();
-        this.board = new Board(this.props.rows, this.props.cols, this.dx, this.dy);
-        this.board.ticker = this.ticker;
-        this.board.on('animating', function (e) {
-            this._state.suspended = e;
-        }, this);
+        if (this.board)
+            return this.board.refresh(this.props.rows, this.props.cols, this.dx, this.dy);
 
-        if (this.layout.playfield.firstChild)
-            this.layout.playfield.innerHTML = '';
-        this.layout.playfield.appendChild(this.board.canvas);
+        this.board = new Board(this.ticker, this.props.rows, this.props.cols, this.dx, this.dy);
     },
 
     _bindEvents: function () {
         this.__grue_props.grue_handles = [];
         this.__grue_props.grue_handles.push(this.ticker.on('tick', this.update, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.ticker.on('draw', this.render, this).lastRegisteredHandler);
+        this.__grue_props.grue_handles.push(this.board.on('outOfBounds', function () {debugger;this.gameOver()}, this).lastRegisteredHandler);
     },
 
     _bindDomEvents: function () {
@@ -356,7 +352,7 @@ Game.prototype = {
             var props = this.props.controls,
                 that  = this;
 
-            if (e.target == this.board.canvas) {
+            if (e.target == this.board.canvas && !this._state.initial) {
                 e.preventDefault();
 
                 switch (e.which) {
@@ -403,6 +399,11 @@ Game.prototype = {
     _destroy: function () {
         this._unbindDomEvents();
         delete this.__grue_props.dom_handles;
+
+        var handles = this.__grue_props.grue_handles;
+        for (var i = 0; i < handles.length; i++)
+            handles[i].off();
+
         this.board.destroy();
         this.preview.destroy();
         this.score.destroy();

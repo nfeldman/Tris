@@ -1,58 +1,37 @@
 var Component = require('../Grue/js/infrastructure/Component'),
     inherit = require('../Grue/js/OO/inherit'),
     pieces  = require('pieces'),
+    mix = require('../Grue/js/object/mix'),
     colors  = pieces.colors,
     eachblock = pieces.eachblock;
 
+
+function BoardPieceProps () {
+    this.x = 0;
+    this.y = 0;
+    this.r = 0;
+    this.t = '';
+}
 // # Playfield
-// The Tetris Guideline specifies a playfield 10 blocks wide by at least 22 
-// blocks tall, where the tetrominoes are started in rows 21 and 22. 
-// Most games hide rows 21 and up. Tetrominoes may land and lock partially 
+// The Tetris Guideline specifies a playfield 10 blocks wide by at least 22
+// blocks tall, where the tetrominoes are started in rows 21 and 22.
+// Most games hide rows 21 and up. Tetrominoes may land and lock partially
 // within the "vanish zone"; they reappear once a line is cleared below them.
 
-function Board (rows, cols, dx, dy) {
-    Component.apply(this);    
+function Board (ticker, rows, cols, dx, dy) {
+    Component.apply(this);
     this.__grue_props.use_event_pool = true;
-
-    this._piece = {
-        x: 0,
-        y: 0,
-        r: 0,
-        t: ''
-    };
-
-    // we have to know about a ticker for animations to work
-    this.ticker = null;
-
-    this._frameCt = 0;
-    this._actions = [];
 
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute('tabindex', '-1');
     this._ctx = this.canvas.getContext('2d');
-    // this.buffer = this.canvas.cloneNode();
-    this.canvas.width  = /*this.buffer.width  = */cols * dx;
-    this.canvas.height = /*this.buffer.height = */rows * dy;
 
-    this._rows = rows + 2; // allows new pieces to be partially visible
+    this._piece = null;
+    this.ticker = ticker;
+    this._frameCt = 0;
+    this._actions = [];
 
-    // using the array constructor looks weird
-    // but it makes sense when you know the size
-    // of the array ahead of time.
-    var row = new Array(cols),
-        i;
-
-    this._cols = cols;
-    this._dx = dx;
-    this._dy = dy;
-
-    this._field = new Array(this._rows);
-
-    for (i = 0; i < 10; i++)
-        row[i] = false;
-
-    for (i = 0; i < this._rows; i++)
-        this._field[i] = row.slice(0);
+    this.refresh(rows, cols, dx, dy);
 
     Object.defineProperties(this, {
         _piece: {enumerable: false},
@@ -64,17 +43,49 @@ function Board (rows, cols, dx, dy) {
         _field: {enumerable: false},
         _dx: {enumerable: false},
         _dy: {enumerable: false}
-
-    })
+    });
 }
 
-Board.prototype = {
-    constructor: Board,
+mix({ // add properties to the prototype without overwriting the constructor
     publishes: Object.create(Component.prototype.publishes, {
-        animating: {value: true},
-        rowsCleared: {value: true}
+        animating  : {value: true},
+        rowsCleared: {value: true},
+        outOfBounds: {value: true}
     }),
+    refresh: function (rows, cols, dx, dy) {
+        this._ctx.clearRect(0, 0, cols * dx, rows * dy);
+        this._piece = new BoardPieceProps();
+
+        this._frameCt = 0;
+        this._actions.length = 0;
+
+        // this.buffer = this.canvas.cloneNode();
+        this.canvas.width  = /*this.buffer.width  = */cols * dx;
+        this.canvas.height = /*this.buffer.height = */rows * dy;
+
+        this._rows = rows + 2; // allows new pieces to be partially visible
+
+        // using the array constructor looks weird
+        // but it makes sense when you know the size
+        // of the array ahead of time.
+        var row = new Array(cols),
+            i;
+
+        this._cols = cols;
+        this._dx = dx;
+        this._dy = dy;
+
+        this._field = new Array(this._rows);
+
+        for (i = 0; i < 10; i++)
+            row[i] = false;
+
+        for (i = 0; i < this._rows; i++)
+            this._field[i] = row.slice(0);
+    },
+
     drawPiece: function (piece, dontClear) {
+        console.log(piece.piece);
         !dontClear && this.clearLastPiece(this._piece.t, this._piece.x, this._piece.y, this._piece.r);
         this._piece.x = piece.x;
         this._piece.y = piece.y - 2;
@@ -128,7 +139,7 @@ Board.prototype = {
 
         // for (var i = 0, l = rows.length; i < l; i++)
 
-         
+
         // var top = 0;
 
         // if (idx >= this._field.length)
@@ -172,16 +183,14 @@ Board.prototype = {
     },
 
     occupy: function (piece) {
+        var outOfBounds = false;
         eachblock(piece, function (x, y) {
+            if (0 > y || y >= this.cols)
+                return outOfBounds = true;
             this._field[y][x] = true;
         }, this);
-        // console.log(this.toString());
-    },
 
-    getLowestOccupiedCell: function (piece) {
-        // var occupied = true;
-        // for (var i = 0; i < this._rows; i++)
-        //     if (!this.ce)
+        outOfBounds && this.emitEvent('outOfBounds', true);
     },
 
     toString: function () {
@@ -191,6 +200,7 @@ Board.prototype = {
             })).join('');
         }).join('\n');
     }
-};
+}, Board.prototype);
+
 inherit(Board, Component);
 module.exports = Board;
