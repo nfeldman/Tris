@@ -4,8 +4,9 @@ module.exports = Board;
 var Component = require('../Grue/js/infrastructure/Component'),
     inherit = require('../Grue/js/OO/inherit'),
     pieces  = require('pieces'),
-    mix = require('../Grue/js/object/mix'),
-    colors  = pieces.colors,
+    Dict = require('../Grue/js/structures/Dict'),
+    mix  = require('../Grue/js/object/mix'),
+    colors = pieces.colors,
     eachblock = pieces.eachblock;
 
 
@@ -34,22 +35,23 @@ function Board (ticker, rows, cols, dx, dy) {
     /** @private */this._ctx = this.canvas.getContext('2d');
 
     /** @private */this._piece = null;
+    /** @private */this._emptyRow = null;
     /** @private */this.ticker = ticker;
-    /** @private */this._frameCt = 0;
     /** @private */this._actions = [];
+    /** @private */this._flashHandles = [];
 
     this.reset(rows, cols, dx, dy);
 
     Object.defineProperties(this, {
         _piece: {enumerable: false},
-        _frameCt: {enumerable: false},
         _actions: {enumerable: false},
         _ctx: {enumerable: false},
         _cols: {enumerable: false},
         _rows: {enumerable: false},
         _field: {enumerable: false},
         _dx: {enumerable: false},
-        _dy: {enumerable: false}
+        _dy: {enumerable: false},
+        _flashHandles: {enumerable: false}
     });
 }
 
@@ -85,7 +87,7 @@ mix(/** @lends Board#prototype */ {
         // using the array constructor looks weird
         // but it makes sense when you know the size
         // of the array ahead of time.
-        var row = new Array(cols),
+        var row = this._emptyRow = new Array(cols),
             i;
 
         /** @private */this._cols = cols;
@@ -159,14 +161,20 @@ mix(/** @lends Board#prototype */ {
      * @return {Boolean} whether rows will be cleared
      */
     maybeClearRows: function (piece) {
-        var rows     = [],
-            occupied = [];
+        var rows = [],
+            set  = {},
+            occupied = new Dict();
 
-        eachblock(piece, function (x, y) {rows.push(y)});
+        eachblock(piece, function (x, y) {
+            if (set[y])
+                return;
+            set[y] = true;
+            rows.push(y);
+        });
 
         for (var i = 0, l = rows.length; i < l; i++)
             if (this.isRowFilled(rows[i]))
-                occupied.push(rows[i]);
+                occupied.add(rows[i]);
 
         if (occupied.length) {
             this.clearRows(occupied);
@@ -177,42 +185,36 @@ mix(/** @lends Board#prototype */ {
 
     /**
      * Sets up and begins clearing rows.
-     * @param  {Array} rows the indicies of rows to clear
+     * @param  {Dict} the dictionary of rows to remove
      * @return {[type]}      [description]
      */
-    clearRows: function (rows) {
+    clearRows: function (dict) {
+        var rows = dict.toArray(),
+            frameCt = 0;
+
         if (!rows.length)
             throw Error('No rows to clear');
 
-        var ct = 0;
-        if (rows.length == 1) {
-            ct = 1;
-            // do animation etc and return
-        }
+        this.emitEvent('animating', true);
 
-        for (var i = 1, l = rows.length; i < l; i++) {
-            if (rows[i] - rows[i-1] == 1)
-                ++ct;
-        }
+        for (var i = 0; i < rows.length; i++)
+            rows[i] -= 2;
 
-        // for (var i = 0, l = rows.length; i < l; i++)
-
-
-        // var top = 0;
-
-        // if (idx >= this._field.length)
-        //     throw Error('cannot clear non-existant row ' + idx);
-
-        // for (var i = 0; i < this._cols; i++)
-        //     this._field[i] = false;
-
-        // this._ctx.clearRect(0, idx * this._dx, this._dx, this._dy);
+        this._flashHandles.push(this.ticker.on('draw', function () {
+            ++frameCt;
+            if (7 > frameCt) {
+                for (var i = 0; i < rows.length; i++)
+                    this.fadeRow(rows[i]);
+            } else {
+                for (var i = 0; i < this._flashHandles.length; i++)
+                    this.ticker.off(this._flashHandles[i]);
+                this._flashHandles.length = 0;
+                this._removeRows(dict);
+                this.emitEvent('animating', false);
+            }
+        }, this).lastRegisteredHandler);
     },
-    // cycle goes:
-    // frames 1  -  5, overlay rows starting with opacity at 100%, reduce opacity by 20% each frame
-    // frames 6  - 10, reverse
-    // frames 11 - 15 reverse again
-    // frame 16 draw cleaned board
+   
     /**
      * Does the row clearing animation
      * @param  {number} idx the index of the row to clear
@@ -220,8 +222,35 @@ mix(/** @lends Board#prototype */ {
      *                      at `idx` to clear.
      * @return {undefined}
      */
-    flashRows: function (idx, ct) {
-        var imgData = this._ctx.getImageData(0, idx * this._dy, this._dx * this._cols, this._dy * ct);
+    fadeRow: function (idx) {
+        this._ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        this._ctx.fillRect(0, idx * this._dy, this._cols * this._dx, this._dy);
+    },
+
+    _removeRows: function (dict) {
+        console.time('removeRows');
+        var field = new Array(this._rows),
+            i = this._rows, 
+            j = i;
+
+        while (i--) {
+            while(dict.contains(i))
+                --i;
+            field[--j] = this._field[i];
+        }
+        // for (var i = 0, j = 0; i < this._rows; i++) {
+        //     while (dict.contains(i))
+        //         ++i;
+
+        //     field[j++] = this._field[i];
+        // }
+
+        for (var i = 0, l = dict.length; i < l; i++)
+            field[i] = this._emptyRow.slice(0);
+
+        this._field = field;
+        this.refresh();
+        console.timeEnd('removeRows');
     },
 
     /**

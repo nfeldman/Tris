@@ -143,7 +143,7 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     nextPiece: function () {
-        console.time('nextPiece')
+        // console.time('nextPiece')
         if (!this.piece)
             this.piece = new pieces.Piece(null, this.dx, this.dy);
 
@@ -161,10 +161,10 @@ mix(/** @lends Game#prototype */{
         this.board.refresh();
 
         if (this.board.willIntersect(this.piece)) {
-            console.timeEnd('nextPiece')
+            // console.timeEnd('nextPiece')
             this.gameOver();
         } else {
-            console.timeEnd('nextPiece')
+            // console.timeEnd('nextPiece')
         }
     },
 
@@ -344,8 +344,8 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     clearRows: function () {
-        if (!this.board.maybeClearRows(this.piece))
-            this.nextPiece();
+        this.board.maybeClearRows(this.piece);
+        this.nextPiece();
     },
 
     /**
@@ -455,7 +455,9 @@ mix(/** @lends Game#prototype */{
         this.__grue_props.grue_handles.push(this.ticker.on('draw', this.render, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.board.on('outOfBounds', this.gameOver, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.board.on('animating', function (e) {
-            this._state.suspended = e;
+            this._state.suspended = e.body;
+            if (!e.body)
+                this.nextPiece();
         }, this));
     },
 
