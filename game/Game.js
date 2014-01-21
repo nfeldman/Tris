@@ -44,6 +44,7 @@ function Game () {
 
     // these are set after instantiation but before calling Game#init
     this.layout = null;
+    this._toggleBtn = null;
     this.bag   = null;
     this.board = null;
     this.props = null;
@@ -64,6 +65,7 @@ function Game () {
     this._piece = new pieces.Piece(null, this.dx, this.dy);
 
     Object.defineProperties(this, {
+        _toggleBtn: {enumerable:false},
         _state: {enumerable:false},
         _counters: {enumerable:false},
         _piecesSeen: {enumerable:false},
@@ -134,6 +136,7 @@ mix(/** @lends Game#prototype */{
     init: function () {
         this.reset();
         this.layout.playfield.appendChild(this.board.canvas);
+        this._toggleBtn = this.layout.root.querySelector('.meta > button[name="toggle"]');
         this._bindEvents();
         this._bindDomEvents();
     },
@@ -474,9 +477,11 @@ mix(/** @lends Game#prototype */{
         this.__grue_props.grue_handles.push(this.board.on('outOfBounds', this.gameOver, this).lastRegisteredHandler);
         this.__grue_props.grue_handles.push(this.board.on('animating', function (e) {
             this._state.suspended = e.body;
-            if (!e.body)
-                this.nextPiece();
+            !e.body && this.nextPiece();
         }, this));
+        this.__grue_props.grue_handles.push(this.on('playing', function (e) {
+            this._toggleBtn.innerHTML = e.body ? 'Pause' : 'Play';
+        }, this).lastRegisteredHandler);
     },
 
     /** @private */
@@ -534,7 +539,7 @@ mix(/** @lends Game#prototype */{
                 }
 
                 if (e.which == props.play_toggle)
-                    this.ticker.toggle();
+                    this.togglePlay();
             }
         }, false, this);
     },
