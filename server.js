@@ -23,12 +23,10 @@ var http = require('http'),
     },
     root = path.resolve(__dirname);
 
-
 // most of these will be from files that don't exist
 process.on('uncaughtException', function (err) {
     console.log('Caught exception: ' + err);
 });
-
 
 http.createServer(function (request, response) {
     var url = parseUrl(request.url),
@@ -39,7 +37,6 @@ http.createServer(function (request, response) {
         bundler, relativeID;
 
     if (~pathname.indexOf('..')) {
-        console.log(pathname);
         response.writeHead(404, {'content-type':'text/html'});
         response.write('<html><h1>404 File Not Found</h1></html>');
         response.end();
@@ -74,15 +71,16 @@ http.createServer(function (request, response) {
                 'cache-control': 'no-cache, must-revalidate',
                 'expires': 'Sat, 26 Jul 1997 05:00:00 GMT'
             });
-            console.log(modules.__)
+
             response.write(JSON.stringify(modules));
             response.end();
             console.timeEnd('serving bundle');
         });
 
+        console.log(__dirname, relativeID,
+                    path.resolve(__dirname, '../'), query.m, query.k)
         return bundler.getModules(__dirname, relativeID,
                     path.resolve(__dirname, '../'), query.m, query.k);
-
     }
 
     console.time('serving ' + pathname);

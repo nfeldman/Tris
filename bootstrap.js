@@ -127,11 +127,13 @@ if (typeof GRUE == 'undefined') throw Error('GRUE global not found.');
      */
     function load (require, root, known, sync) {
         var request = XHR(),
-            url = location.origin + '/requirer?r=' + encodeURIComponent(root);
+            url = location.origin + (devmode ? '/requirer?r=' + encodeURIComponent(root) : '/' + root);
 
-        if (known && known.length)
-            url += '&k=' + encodeURIComponent(JSON.stringify(known));
-        url += '&m=' + (devmode ? 0 : 1);
+        if (devmode) {
+            if (known && known.length)
+                url += '&k=' + encodeURIComponent(JSON.stringify(known));
+            url += '&m=' + (devmode ? 0 : 1);
+        }
 
         request.open('GET', url);
 

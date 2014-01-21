@@ -27,7 +27,7 @@
             <div class="meta">
                 <h1>GRUETRIS</h1>
                 <div class="buttons">
-                    <button type="button" class="btn" name="new">New Game</button> <button type="button" class="btn" name="options">Options</button>
+                    <button type="button" class="btn" name="new">New Game</button> <button type="button" class="btn" name="options" title="not yet implemented" disabled>Options</button>
                 </div>
                     <div class="scoreboard">
                         <div>Level: <span></span></div>
@@ -40,7 +40,7 @@
         </div>
 
         <script type="text/javascript" src="/Grue/js/base/base.js"></script>
-        <script type="text/javascript">GRUE.set('mode', 'development')</script>
-        <script type="text/javascript" src="/bootstrap.js" id="grue-bootstrap" data-main="index"></script>
+        <script type="text/javascript">GRUE.set('mode', 'production')</script>
+        <script type="text/javascript" src="/bootstrap.js" id="grue-bootstrap" data-main="dist/index.js"></script>
     </body>
 </html>
