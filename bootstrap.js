@@ -126,6 +126,17 @@ if (typeof GRUE == 'undefined') throw Error('GRUE global not found.');
      * @return {undefined}
      */
     function load (require, root, known, sync) {
+        // bit of a hack in the gh-pages branch to get this working
+        if (!devmode && GRUE.modules) {
+            if (!modules)
+                modules = GRUE.modules.modules;
+            else
+                for (name in GRUE.modules.modules)
+                    !modules[name] && (modules[name] = GRUE.modules.modules[name]);
+            require(GRUE.modules.__);
+            return;
+        }
+
         var request = XHR(),
             url = location.origin + (devmode ? '/requirer?r=' + encodeURIComponent(root) : '/' + root);
 
