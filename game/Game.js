@@ -2,7 +2,6 @@ var inherit = require('../Grue/js/OO/inherit'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     mix = require('../Grue/js/object/mix'),
-    Board  = require('Board'),
     pieces = require('pieces');
 
 module.exports = Game;
@@ -47,10 +46,10 @@ function Game () {
     this._toggleBtn = null;
     this.bag   = null;
     this.board = null;
-    this.props = null;
+    this.props  = null;
     this.ticker = null;
     this.scoreCtor = null;
-    this.previewCtor = null;
+    this.boardCtor = null;
 
     // these are set/reset by Game#reset (first called by Game#init)
     this._state    = new GameState();
@@ -182,19 +181,8 @@ mix(/** @lends Game#prototype */{
         this._counters.traveled += (speed ? 10/speed : 1);
 
         // skip rerendering if nothing has changed
-        this._state.rendering = actions.length || this._counters.traveled >= 1;
+        // this._state.rendering = actions.length || this._counters.traveled >= 1;
 
-        for (var i = 0; i < actions.length; i++) {
-            switch (actions[i]) {
-                case Game.ACTIONS.LEFT   : this.maybeSlideLeft()    ; break;
-                case Game.ACTIONS.RIGHT  : this.maybeSlideRight()   ; break;
-                case Game.ACTIONS.R_LEFT : this.maybeRotateRight()  ; break;
-                case Game.ACTIONS.R_RIGHT: this.maybeRotateLeft()   ; break;
-                case Game.ACTIONS.SOFT   : this.maybeSlideDown(true); break;
-                case Game.ACTIONS.HARD   : this.hardDrop()          ; break;
-                case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
-            }
-        }
 
         if (this._state.descending) {
             if (this._counters.traveled >= 1)
@@ -220,6 +208,17 @@ mix(/** @lends Game#prototype */{
                 this._state.sliding = false;
             } else {
                 --this._counters.slideFrames;
+            }
+        }
+        for (var i = 0; i < actions.length; i++) {
+            switch (actions[i]) {
+                case Game.ACTIONS.LEFT   : this.maybeSlideLeft()    ; break;
+                case Game.ACTIONS.RIGHT  : this.maybeSlideRight()   ; break;
+                case Game.ACTIONS.R_LEFT : this.maybeRotateRight()  ; break;
+                case Game.ACTIONS.R_RIGHT: this.maybeRotateLeft()   ; break;
+                case Game.ACTIONS.SOFT   : this.maybeSlideDown(true); break;
+                case Game.ACTIONS.HARD   : this.hardDrop()          ; break;
+                case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
             }
         }
     },
@@ -260,10 +259,11 @@ mix(/** @lends Game#prototype */{
             return;
 
         this._counters.traveled = 0;
-        if (this.maybeToggleDescent())
+        if (this.maybeToggleDescent()) {
             ++this.piece.y;
-        else if (soft)
-            ++this._counters.softDropped;
+            if (soft)
+                ++this._counters.softDropped;
+        }
     },
 
     /**
@@ -466,7 +466,7 @@ mix(/** @lends Game#prototype */{
         if (this.board)
             return this.board.reset(this.props.rows, this.props.cols, this.dx, this.dy);
 
-        this.board = new Board(this.ticker, this.props.rows, this.props.cols, this.dx, this.dy);
+        this.board = new this.boardCtor(this.ticker, this.props.rows, this.props.cols, this.dx, this.dy);
     },
 
     /** @private */

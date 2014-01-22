@@ -3,15 +3,10 @@
  *  • the `Piece` constructor
  *  • the `Bag` constructor
  *
- * It also exports the following static objects and functions:
+ * It also exports two data objects containing default values:
  *  • a `pieces` object, which contains an array of 4 numbers for each piece
  *    (tetromino), each number representing one orientation of that piece
  *  • a `colors` object, which maps the name of a piece to its color
- *  • `eachblock` a function for iterating over the visible blocks of a piece
- *  • `drawPiece` a function for drawing a piece
- *  • `clearPiece` a function for clearing a piece
- *  • `drawBlock` a function for filling a single block
- *  • `clearBlock` a function for clearing a single block
  */
 
 var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
@@ -173,7 +168,8 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
     //     J: 6,
     //     L: 7
     // },
-    generatePieces = require('./defaultPieceGenerator');
+    generatePieces = require('defaultPieceGenerator'),
+    eachblock = require('eachblock');
 
 // Object.defineProperties(colors, {
 //     getColor: {
@@ -187,124 +183,6 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
 exports.pieces = pieces;
 exports.colors = colors;
 
-/**
- * a function that iterates over 16 bits of a JS number used
- * to represent a piece and calls a callback for each on bit.
- * @static
- * @param  {string|Piece}   type  either the string name of a piece or an instance of Piece
- * @param  {number}   [x]       the x coordinate of a piece, not required if type is a Piece instance
- * @param  {number}   [y]       the y coordinate of a piece, not required if type is a Piece instance
- * @param  {number}   [dir]     the rotation (0 - 3) of a piece, not required if type is a Piece instance
- * @param  {Function} fn      the function to call if a block is filled (bit is on) in the piece
- * @param  {number}   [thisObj] context in which to call the fn
- * @return {undefined}
- */
-function eachblock (type, x, y, dir, fn, thisObj) {
-    if (type instanceof Piece) {
-        thisObj = y;
-        fn = x;
-        x = type.x;
-        y = type.y;
-        dir = type.r;
-        type = type.piece;
-    }
-
-    var row = 0,
-        col = 0,
-        piece = pieces[type][dir],
-        stop = false;
-
-    for (var bit = 0x8000;  !stop && bit > 0; bit >>= 1) {
-        if (piece & bit)
-            stop = fn.call(thisObj, x + col, y + row);
-
-        if (++col == 4) {
-            col = 0;
-            ++row;
-        }
-    }
-}
-
-exports.eachblock = eachblock;
-
-/**
- * Draws a piece
- * @static
- * @param  {string} type [description]
- * @param  {number} x    [description]
- * @param  {number} y    [description]
- * @param  {number} dx   [description]
- * @param  {number} dy   [description]
- * @param  {number} dir  [description]
- * @param  {CanvasRenderingContext2D} ctx  [description]
- * @return {undefined}      [description]
- */
-function drawPiece (type, x, y, dx, dy, dir, ctx) {
-    eachblock(type, x, y, dir, function (x, y) {
-        drawBlock(type, x, y, dx, dy, ctx);
-    });
-}
-exports.drawPiece = drawPiece;
-
-/**
- * Erases a piece
- * @static
- * @param  {string} type [description]
- * @param  {number} x    [description]
- * @param  {number} y    [description]
- * @param  {number} dx   [description]
- * @param  {number} dy   [description]
- * @param  {number} dir  [description]
- * @param  {CanvasRenderingContext2D} ctx  [description]
- * @return {undefined}      [description]
- */
-function clearPiece (type, x, y, dx, dy, dir, ctx) {
-    eachblock(type, x, y, dir, function (x, y) {
-        clearBlock(x, y, dx, dy, ctx);
-    });
-}
-exports.clearPiece = clearPiece;
-
-function drawBlock (type, x, y, dx, dy, ctx) {
-    ctx.fillStyle = colors[type];
-    ctx.fillRect(x*dx, y*dy, dx, dy);
-
-    // if (arguments.callee.caller.caller.caller.caller.name == '')
-    //     console.log('filling block', x, y);
-
-    var xx = dx * .1,
-        yy = dy * .1;
-
-    ctx.beginPath();
-    ctx.moveTo(x * dx, y * dy);
-    ctx.lineTo(x * dx + xx, y * dy + yy);
-    ctx.lineTo(x * dx + xx, y * dy + 9 * yy);
-    ctx.lineTo(x * dx + 9 * xx, y * dy + 9 * yy);
-    ctx.lineTo(x * dx + dx, y * dy + dy);
-    ctx.lineTo(x * dx, y * dy + dy);
-    ctx.lineTo(x * dx, y * dy);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.fill();    
-    ctx.beginPath();
-    ctx.moveTo(x * dx, y * dy);
-    ctx.lineTo(x * dx + dx, y * dy);
-    ctx.lineTo(x * dx + dx, y * dy + dy);
-    ctx.lineTo(x * dx + 9 * xx, y * dy + 9 * yy);
-    ctx.lineTo(x * dx + 9 * xx, y * dy + yy);
-    ctx.lineTo(x * dx + xx, y * dy + yy);
-    ctx.lineTo(x * dx, y * dy);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fill();
-}
-exports.drawBlock = drawBlock;
-
-function clearBlock (x, y, dx, dy, ctx) {
-    // console.log('clearing block', x, y);
-    ctx.clearRect(x*dx, y*dy, dx, dy);
-}
-exports.clearBlock = clearBlock;
 
 /**
  * Creates a Bag object, which provides a random piece name on
@@ -341,6 +219,7 @@ Bag.prototype.next = function () {
 
 Bag.prototype.preview = function (n) {
     n == null && (n = 1);
+
     if (n > this.pieces.length)
         this.fill();
 
@@ -354,44 +233,29 @@ Bag.prototype.reset = function () {
 
 exports.Bag = Bag;
 
-function Piece (piece, dx, dy) {
-    EventEmitter.call(this);
-    this._dirty = false;
-    this.x = 3; // left
-    this.y = 0; // top
-    this.r = 0; // rotation 0 - 4
-    this.dx = dx; // width of cell
-    this.dy = dy; // height of cell
-    this.piece = piece || '';
+/**
+ * A piece consists of a name, an x and a y coordinate and a flag
+ * specifying which of 4 orientations it occupies
+ * @param {[type]} name [description]
+ */
+function Piece (name) {
+    this.x = 3;
+    this.y = 0;
+    this.r = 0;
+    this.name = name || '';
 }
-inherit(Piece, EventEmitter);
+
+Piece.prototype.slideLeft  = function () {--this.x};
+
+Piece.prototype.slideRight = function () {++this.x};
 
 Piece.prototype.rotateLeft = function (x) {
-    this._dirty = true;
-    if (!this.r)
-        this.r = 3;
-    else
-        --this.r;
-
-    return this.r;
+    return this.r = !this.r ? 3 : --this.r;
 };
 
 Piece.prototype.rotateRight = function (x) {
-    this._dirty = true;
     ++this.r
     return this.r %= 4;
 };
-
-Piece.prototype.draw = function (x, y, ctx) {
-    if (!this._dirty)
-        return;
-
-    drawPiece(this.piece, x, y, this.dx, this.dy, this.r, ctx);
-    this._dirty = false;
-};
-
-Piece.prototype.toString = function () {
-    return pieces[this._piece][this.r].map(function (v, i) {if (i && !(i % 4)) return v ? '\n#' : '\n '; return v ? '#' : ' '}).join('');
-}
 
 exports.Piece = Piece;

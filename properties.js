@@ -22,5 +22,5 @@ module.exports = {
     "preview": {
         "show": 3
     },
-    "start_level": 0
+    "start_level": 5
 };

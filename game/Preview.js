@@ -1,4 +1,7 @@
-var pieces = require('pieces');
+var p = require('pieces'),
+    pieces = p.pieces,
+    colors = p.colors,
+    drawPiece = require('PieceRenderer').drawPiece;
 
 /**  @module tris/game/Preivew */
 module.exports = Preview;
@@ -22,10 +25,14 @@ function Preview () {
         _w: {enumerable: false},
         _bag: {enumerable: false}
     });
+    this.height = 200;
+    this.width  = 100;
 }
 
 Preview.prototype = {
     constructor: Preview,
+    // TODO an algorithm to position pieces without knowing
+    // what they are in advance.
     draw: function () {
         var n = this._showNextCt,
             next = this.bag.preview(n),
@@ -70,7 +77,7 @@ Preview.prototype = {
             else
                 x = 0;
 
-            pieces.drawPiece(nxt, x, y, 20, 20, 0, this.ctx);
+            drawPiece(pieces[nxt][0], colors[nxt], x, y, 20, 20, 0, this.ctx);
         }
     },
     clear: function () {

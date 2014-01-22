@@ -3,11 +3,11 @@ module.exports = Board;
 
 var Component = require('../Grue/js/infrastructure/Component'),
     inherit = require('../Grue/js/OO/inherit'),
-    pieces  = require('pieces'),
+    PieceRenderer = require('PieceRenderer'),
     Dict = require('../Grue/js/structures/Dict'),
     mix  = require('../Grue/js/object/mix'),
-    colors = pieces.colors,
-    eachblock = pieces.eachblock;
+    pieces = require('pieces'),
+    eachblock = require('eachblock');
 
 
 /**
@@ -32,8 +32,9 @@ function Board (ticker, rows, cols, dx, dy) {
 
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute('tabindex', '-1');
-    /** @private */this._ctx = this.canvas.getContext('2d');
 
+    /** @private */this._ctx = this.canvas.getContext('2d');
+    /** @private */this._renderer = null;
     /** @private */this._piece = null;
     /** @private */this._emptyRow = null;
     /** @private */this.ticker = ticker;
@@ -75,6 +76,9 @@ mix(/** @lends Board#prototype */ {
         this._ctx.clearRect(0, 0, cols * dx, rows * dy);
         this._piece = new pieces.Piece(null, dx, dy);
 
+        if (dx != this._dx || dy != this._dy)
+            this._renderer = new PieceRenderer(pieces.pieces, pieces.colors, dx, dy);
+
         this._frameCt = 0;
         this._actions.length = 0;
 
@@ -107,11 +111,12 @@ mix(/** @lends Board#prototype */ {
         var dx  = this._dx,
             dy  = this._dy,
             f   = this._field,
-            ctx = this._ctx;
+            ctx = this._ctx,
+            piece;
 
         for (var i = 2, c = this._cols, r = this._rows; i < r; i++) {
             for (var j = 0; j < c; j++)
-                f[i][j] ? pieces.drawBlock(f[i][j], j, i - 2, dx, dy, ctx) : pieces.clearBlock(j, i - 2, dx, dy, ctx);
+                f[i][j] ? PieceRenderer.drawBlock(pieces.colors[f[i][j]], j, i - 2, dx, dy, ctx) : ctx.clearRect(j * dx, (i - 2) * dy, dx, dy);
         }
     },
 
@@ -123,24 +128,12 @@ mix(/** @lends Board#prototype */ {
      * @return {undefined}
      */
     drawPiece: function (piece, dontClear) {
-        !dontClear && this.clearPiece(this._piece.piece, this._piece.x, this._piece.y, this._piece.r);
+        !dontClear && this._renderer.clear(this._piece, this._ctx);
         this._piece.x = piece.x;
         this._piece.y = piece.y - 2;
         this._piece.r = piece.r;
-        this._piece.piece = piece.piece;
-        piece.y >= 0 && pieces.drawPiece(this._piece.piece, this._piece.x, this._piece.y, this._dx, this._dy, this._piece.r, this._ctx);
-    },
-
-    /**
-     * Clears a piece from the board
-     * @param  {string} t Type of piece
-     * @param  {number} x x coordinate of piece
-     * @param  {number} y y coordinate of piece
-     * @param  {number} r rotation of piece
-     * @return {undefined}
-     */
-    clearPiece: function (t, x, y, r) {
-        pieces.clearPiece(t, x, y, this._dx, this._dy, r, this._ctx);
+        this._piece.name = piece.name;
+        piece.y >= 0 && this._renderer.draw(this._piece, this._ctx);
     },
 
     /**
@@ -165,7 +158,7 @@ mix(/** @lends Board#prototype */ {
             set  = {},
             occupied = new Dict();
 
-        eachblock(piece, function (x, y) {
+        eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
             if (set[y])
                 return;
             set[y] = true;
@@ -255,7 +248,7 @@ mix(/** @lends Board#prototype */ {
      */
     willIntersect: function (piece) {
         var result = null;
-        eachblock(piece, function (x, y) {
+        PieceRenderer.eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
             if (this.isCellOccupied(x, y)) {
                 result = {
                     left: x < 0 || piece.x < this._piece.x && this._field[y] && this._field[y][x],
@@ -291,9 +284,9 @@ mix(/** @lends Board#prototype */ {
      */
     occupy: function (piece) {
         var outOfBounds = false,
-            l = piece.piece;
+            l = piece.name;
 
-        eachblock(piece, function (x, y) {
+        eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
             if (0 > y || y >= this.cols)
                 return outOfBounds = true;
             this._field[y][x] = l;
