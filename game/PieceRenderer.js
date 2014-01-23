@@ -37,22 +37,21 @@ mix(/** @lends PieceRenderer.prototype */ {
         /**@private*/this._spritePos = Object.create(null);
         /**@private*/this._dx = dx;
         /**@private*/this._dy = dy;
+        /**@private*/this._tileH = 4 * dx;
+        /**@private*/this._tileW = 4 * dy;
 
         var keys  = Object.keys(models),
             floor = Math.floor,
-            tileW = 4 * dx,
-            tileH = 4 * dy,
             ctx;
 
-        this._sprites.width  = 4 * tileW;
-        this._sprites.height = keys.length * tileH;
+        this._sprites.width  = 4 * this._tileW;
+        this._sprites.height = keys.length * this._tileH;
 
 
         ctx = this._sprites.getContext('2d');
 
         keys.forEach(function (k, row) {
             this._spritePos[k] = row;
-            var top = row * tileH;
             models[k].forEach(function (m, col) {
                 eachblock(m, col * 4, row * 4, function (x, y) {
                     drawBlock(colors[k], x, y, dx, dy, ctx);
@@ -75,14 +74,14 @@ mix(/** @lends PieceRenderer.prototype */ {
 
         ctx.drawImage(
                         this._sprites, 
-                        4 * piece.r * this._dx, 
-                        4 * this._spritePos[piece.name] * this._dy,
-                        4 * this._dx, 
-                        4 * this._dy, 
+                        piece.r * this._tileW, 
+                        this._spritePos[piece.name] * this._tileH,
+                        this._tileW, 
+                        this._tileH, 
                         piece.x * this._dx,
                         piece.y * this._dy,
-                        4 * this._dx, 
-                        4 * this._dy
+                        this._tileW, 
+                        this._tileH
                      );
     },
     /**

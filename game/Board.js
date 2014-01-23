@@ -6,7 +6,8 @@ var Component = require('../Grue/js/infrastructure/Component'),
     PieceRenderer = require('PieceRenderer'),
     Dict = require('../Grue/js/structures/Dict'),
     mix  = require('../Grue/js/object/mix'),
-    pieces = require('pieces'),
+    Piece = require('Piece'),
+    pieces = Piece.pieces,
     eachblock = require('eachblock');
 
 
@@ -39,7 +40,7 @@ function Board (ticker, rows, cols, dx, dy) {
     /** @private */this._emptyRow = null;
     /** @private */this.ticker = ticker;
     /** @private */this._actions = [];
-    /** @private */this._flashHandles = [];
+    /** @private */this._flashHandle = null;
 
     this.reset(rows, cols, dx, dy);
 
@@ -52,7 +53,7 @@ function Board (ticker, rows, cols, dx, dy) {
         _field: {enumerable: false},
         _dx: {enumerable: false},
         _dy: {enumerable: false},
-        _flashHandles: {enumerable: false}
+        _flashHandle: {enumerable: false}
     });
 }
 
@@ -74,10 +75,10 @@ mix(/** @lends Board#prototype */ {
      */
     reset: function (rows, cols, dx, dy) {
         this._ctx.clearRect(0, 0, cols * dx, rows * dy);
-        this._piece = new pieces.Piece(null, dx, dy);
+        this._piece = new Piece(null, dx, dy);
 
         if (dx != this._dx || dy != this._dy)
-            this._renderer = new PieceRenderer(pieces.pieces, pieces.colors, dx, dy);
+            this._renderer = new PieceRenderer(Piece.pieces, Piece.colors, dx, dy);
 
         this._frameCt = 0;
         this._actions.length = 0;
@@ -116,7 +117,7 @@ mix(/** @lends Board#prototype */ {
 
         for (var i = 2, c = this._cols, r = this._rows; i < r; i++) {
             for (var j = 0; j < c; j++)
-                f[i][j] ? PieceRenderer.drawBlock(pieces.colors[f[i][j]], j, i - 2, dx, dy, ctx) : ctx.clearRect(j * dx, (i - 2) * dy, dx, dy);
+                f[i][j] ? PieceRenderer.drawBlock(Piece.colors[f[i][j]], j, i - 2, dx, dy, ctx) : ctx.clearRect(j * dx, (i - 2) * dy, dx, dy);
         }
     },
 
@@ -158,7 +159,7 @@ mix(/** @lends Board#prototype */ {
             set  = {},
             occupied = new Dict();
 
-        eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
+        eachblock(Piece.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
             if (set[y])
                 return;
             set[y] = true;
@@ -192,19 +193,17 @@ mix(/** @lends Board#prototype */ {
         for (var i = 0; i < rows.length; i++)
             rows[i] -= 2;
 
-        this._flashHandles.push(this.ticker.on('draw', function () {
+        this._flashHandle = this.ticker.on('draw', function () {
             ++frameCt;
             if (7 > frameCt) {
                 for (var i = 0; i < rows.length; i++)
                     this.fadeRow(rows[i]);
             } else {
-                for (var i = 0; i < this._flashHandles.length; i++)
-                    this.ticker.off(this._flashHandles[i]);
-                this._flashHandles.length = 0;
+                this._flashHandle.off();
                 this._removeRows(dict);
                 this.emitEvent('animating', false);
             }
-        }, this).lastRegisteredHandler);
+        }, this).lastRegisteredHandler;
     },
    
     /**
@@ -247,32 +246,29 @@ mix(/** @lends Board#prototype */ {
      *                          bottom of the piece.
      */
     willIntersect: function (piece) {
-        var result = null;
-        PieceRenderer.eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
-            if (this.isCellOccupied(x, y)) {
-                result = {
-                    left: x < 0 || piece.x < this._piece.x && this._field[y] && this._field[y][x],
-                    right: x >= this._cols || piece.x > this._piece.x && this._field[y] && this._field[y][x],
-                    bottom: y >= this._rows || piece.y < this._piece.y && this._field[y][x],
-                    x: x,
-                    y: y
-                };
-                return true;
-            }
-        }, this);
-        return result;
-    },
+        var row  = 0,
+            col  = 0,
+            y    = piece.y,
+            x    = piece.x,
+            yy, xx;
 
-    /**
-     * Checks whether a block is occupied
-     * @param  {number}  x x coordinate of the block
-     * @param  {number}  y y coordinate of the block
-     * @return {Boolean}
-     */
-    isCellOccupied: function (x, y) {
-        if (this._field[y] == null || this._field[y][x] == null)
-            return true;
-        return this._field[y][x];
+        piece = Piece.pieces[piece.name][piece.r];
+
+        for (var bit = 0x8000; bit > 0; bit >>= 1) {
+            if (piece & bit) {
+                xx = x + col;
+                yy = y + row;
+                if (this._field[yy] == null || this._field[yy][xx] == null || !!this._field[yy][xx])
+                    return true;
+            }
+
+            if (++col == 4) {
+                col = 0;
+                ++row;
+            }
+        }
+
+        return false;
     },
 
     /**
@@ -286,7 +282,7 @@ mix(/** @lends Board#prototype */ {
         var outOfBounds = false,
             l = piece.name;
 
-        eachblock(pieces.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
+        eachblock(Piece.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
             if (0 > y || y >= this.cols)
                 return outOfBounds = true;
             this._field[y][x] = l;

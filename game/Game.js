@@ -2,7 +2,7 @@ var inherit = require('../Grue/js/OO/inherit'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     mix = require('../Grue/js/object/mix'),
-    pieces = require('pieces');
+    Piece = require('Piece');
 
 module.exports = Game;
 
@@ -61,7 +61,7 @@ function Game () {
     this.dx = 0;
     this.dy = 0;
     this.piece  = null;
-    this._piece = new pieces.Piece(null, this.dx, this.dy);
+    this._piece = new Piece(null, this.dx, this.dy);
 
     Object.defineProperties(this, {
         _toggleBtn: {enumerable:false},
@@ -146,11 +146,11 @@ mix(/** @lends Game#prototype */{
      */
     nextPiece: function () {
         if (!this.piece)
-            this.piece = new pieces.Piece(null, this.dx, this.dy);
+            this.piece = new Piece(null, this.dx, this.dy);
 
         var piece = this.bag.next();
-        pieces.Piece.call(this.piece, piece, this.dx, this.dy);
-        pieces.Piece.call(this._piece, piece, this.dx, this.dy);
+        Piece.call(this.piece, piece, this.dx, this.dy);
+        Piece.call(this._piece, piece, this.dx, this.dy);
         ++this._piecesSeen;
 
         GameCounters.call(this._counters);
@@ -326,25 +326,21 @@ mix(/** @lends Game#prototype */{
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
             if (left) {
-                if (intersects.left) {
-                    ++this.piece.x;
-                    intersects = this.board.willIntersect(this.piece);
-                    if (intersects)
-                        --this.piece.x;
-                    else
-                        return;
-                }
-            } else {
-                if (intersects.right) {
+                ++this.piece.x;
+                intersects = this.board.willIntersect(this.piece);
+                if (intersects)
                     --this.piece.x;
-                    intersects = this.board.willIntersect(this.piece);
-                    if (intersects)
-                        ++this.piece.x;
-                    else
-                        return;
-                }
+                else
+                    return;
+            } else {
+                --this.piece.x;
+                intersects = this.board.willIntersect(this.piece);
+                if (intersects)
+                    ++this.piece.x;
+                else
+                    return;
             }
-            // TODO wall kicks
+
             if (left)
                 this.piece.rotateRight();
             else

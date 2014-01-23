@@ -1,6 +1,6 @@
-var pieces = require('game/pieces'),
+var Piece = require('game/Piece'),
     Ticker = require('Grue/js/dom/anim/Ticker'),
-    Bag = pieces.Bag,
+    Bag = Piece.Bag,
     Game = require('game/Game'),
     Preview = require('game/Preview'),
     Score = require('game/Score'),

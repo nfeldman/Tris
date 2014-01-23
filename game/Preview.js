@@ -1,4 +1,4 @@
-var p = require('pieces'),
+var p = require('Piece'),
     pieces = p.pieces,
     colors = p.colors,
     drawPiece = require('PieceRenderer').drawPiece;
