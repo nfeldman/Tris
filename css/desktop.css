@@ -98,6 +98,9 @@ h2 {
 }
 
 .btn {
+    -mozilla-transform: translateZ(0);
+    -webkit-transform: translateZ(0); /* hack. in current versions of chrome, this switches to hardware compositing */
+    transform: translateZ(0);
     font-family: pt_monoregular, monospace;
     /*font-weight: bold;*/
     border-color: #555;
@@ -113,6 +116,7 @@ h2 {
     font-size: 2em;
     width: 6.25em;
     margin-top: 10px;
+
     background: #c3d9ff; /* Old browsers */
     background: -moz-linear-gradient(top,  #c3d9ff 0%, #b1c8ef 41%, #98b0d9 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c3d9ff), color-stop(41%,#b1c8ef), color-stop(100%,#98b0d9)); /* Chrome,Safari4+ */
@@ -121,4 +125,10 @@ h2 {
     background: -ms-linear-gradient(top,  #c3d9ff 0%,#b1c8ef 41%,#98b0d9 100%); /* IE10+ */
     background: linear-gradient(to bottom,  #c3d9ff 0%,#b1c8ef 41%,#98b0d9 100%); /* W3C */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c3d9ff', endColorstr='#98b0d9',GradientType=0 ); /* IE6-9 */
+}
+
+canvas {
+    -mozilla-transform: translateZ(0);
+    -webkit-transform: translateZ(0); /* hack. in current versions of chrome, this switches to hardware compositing */
+    transform: translateZ(0);
 }
