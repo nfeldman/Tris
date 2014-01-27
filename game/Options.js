@@ -71,7 +71,6 @@ mix({
                 name   = target.nodeName.toLowerCase();
 
             if (name == 'button') {
-                    debugger;
                 if (target.name == 'save') {
                     for (var i = 0; i < radios.length; i++)
                         if (radios[i].checked)

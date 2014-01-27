@@ -218,6 +218,13 @@ mix(/** @lends Game#prototype */{
 
             if (!this._counters.slideFrames || this._counters.motionless > 19) {
                 if (this.piece.y) {
+                    ++this.piece.y;
+                    if (this.board.willIntersect(this.piece)) {
+                        --this.piece.y;
+                    } else {
+                        this._state.descending = false;
+                        return this.maybeSlideDown();
+                    }
                     this.board.occupy(this.piece);
                     this._actions.push(Game.ACTIONS.CLEAR);
                 } else {
@@ -382,7 +389,7 @@ mix(/** @lends Game#prototype */{
         if (intersects) {
             if (this._state.descending) {
                 this._state.descending = false;
-                this._counters.slideFrames = 40 - (this.score.level * 2);
+                this._counters.slideFrames = Math.max(40 - (this.score.level * 2), 5);
             }
         } else {
             this._state.descending = true;
@@ -454,10 +461,13 @@ mix(/** @lends Game#prototype */{
         }, destroyOnHide: true, onHide: (function (data) {
             if (data.up_turns_right != this.props.controls.up_turns_right)
                 this.props.controls.up_turns_right = data.up_turns_right;
+
             if (this.props.start_level != data.start_level) {
                 this.props.start_level = data.start_level;
                 this.reset();
             }
+
+            localStorage.setItem('props', JSON.stringify(this.props));
         }).bind(this)}).show();
     },
 
