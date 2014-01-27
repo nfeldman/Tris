@@ -2,7 +2,8 @@ var inherit = require('../Grue/js/OO/inherit'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     mix = require('../Grue/js/object/mix'),
-    Piece = require('Piece');
+    Piece = require('./Piece'),
+    Options = require('./Options');
 
 module.exports = Game;
 
@@ -447,11 +448,17 @@ mix(/** @lends Game#prototype */{
     },
 
     showOptions: function () {
-        if (this._options)
-            return this._options.show();
-
-        this._options = new Options(this.props);
-        this.showOptions();
+        new Options({data: {
+            up_turns_right: this.props.controls.up_turns_right,
+            start_level: this.props.start_level
+        }, destroyOnHide: true, onHide: (function (data) {
+            if (data.up_turns_right != this.props.controls.up_turns_right)
+                this.props.controls.up_turns_right = data.up_turns_right;
+            if (this.props.start_level != data.start_level) {
+                this.props.start_level = data.start_level;
+                this.reset();
+            }
+        }).bind(this)}).show();
     },
 
     /** @private */
@@ -528,6 +535,10 @@ mix(/** @lends Game#prototype */{
                         this._actions.push(Game.ACTIONS.R_LEFT);
                       break;
                     case 38: // up arrow
+                        if (!props.up_turns_right) {
+                            this._actions.push(Game.ACTIONS.R_LEFT);
+                            break;
+                        }   
                     case props.rotate_right:
                         this._actions.push(Game.ACTIONS.R_RIGHT);
                       break;
