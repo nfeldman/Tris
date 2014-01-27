@@ -6,7 +6,8 @@ module.exports = {
         "right": 39, // right arrow
         "soft_drop": 40, // down arrow
         "hard_drop": 32, // space 
-        "play_toggle": 80 // P
+        "play_toggle": 80, // P
+        "up_turns_right": false
     },
     // @see <http://tetrisconcept.net/wiki/Scoring>
     "scoring": {

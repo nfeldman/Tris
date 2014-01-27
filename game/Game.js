@@ -56,6 +56,7 @@ function Game () {
     this._counters = new GameCounters();
     this._piecesSeen = 0;
     this._actions = [];
+    this._options = null;
     this.score   = null;
     this.preview = null;
     this.dx = 0;
@@ -69,6 +70,7 @@ function Game () {
         _counters: {enumerable:false},
         _piecesSeen: {enumerable:false},
         _actions: {enumerable:false},
+        _options: {enumerable:false},
         _piece: {enumerable:false}
     });
 }
@@ -94,7 +96,7 @@ Object.defineProperty(Game, 'ACTIONS', {enumerable:false});
 // add properties to the prototype without overwriting the constructor
 mix(/** @lends Game#prototype */{
     /** 
-     * A convention follwed by Grue Components, advertises what events are will
+     * A convention follwed by Grue Components, advertises what events will
      * be emitted by a Game object.
      */
     publishes: Object.create(Component.prototype.publishes, {
@@ -175,14 +177,29 @@ mix(/** @lends Game#prototype */{
         if (this._state.suspended || this._state.ended)
             return;
 
-        var speed   = this.score.level > 15 ? 0 : Math.floor(Math.log(15 - this.score.level) * 40),
-            actions = this._actions.slice(0);
-        this._actions.length = 0;
+        var speed   = this.score.level > 14 ? 0 : Math.floor(Math.log(15 - this.score.level) * 40),
+            actions;
         this._counters.traveled += (speed ? 10/speed : 1);
 
         // skip rerendering if nothing has changed
-        // this._state.rendering = actions.length || this._counters.traveled >= 1;
+        this._state.rendering = !!this._actions.length || this._counters.traveled >= 1;
 
+        if (this._actions.length) {
+            actions = this._actions.slice(0);
+            this._actions.length = 0;
+
+            for (var i = 0; i < actions.length; i++) {
+                switch (actions[i]) {
+                    case Game.ACTIONS.LEFT   : this.maybeSlideLeft()    ; break;
+                    case Game.ACTIONS.RIGHT  : this.maybeSlideRight()   ; break;
+                    case Game.ACTIONS.R_LEFT : this.maybeRotateRight()  ; break;
+                    case Game.ACTIONS.R_RIGHT: this.maybeRotateLeft()   ; break;
+                    case Game.ACTIONS.SOFT   : this.maybeSlideDown(true); break;
+                    case Game.ACTIONS.HARD   : this.hardDrop()          ; break;
+                    case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
+                }
+            }
+        }
 
         if (this._state.descending) {
             if (this._counters.traveled >= 1)
@@ -210,17 +227,6 @@ mix(/** @lends Game#prototype */{
                 --this._counters.slideFrames;
             }
         }
-        for (var i = 0; i < actions.length; i++) {
-            switch (actions[i]) {
-                case Game.ACTIONS.LEFT   : this.maybeSlideLeft()    ; break;
-                case Game.ACTIONS.RIGHT  : this.maybeSlideRight()   ; break;
-                case Game.ACTIONS.R_LEFT : this.maybeRotateRight()  ; break;
-                case Game.ACTIONS.R_RIGHT: this.maybeRotateLeft()   ; break;
-                case Game.ACTIONS.SOFT   : this.maybeSlideDown(true); break;
-                case Game.ACTIONS.HARD   : this.hardDrop()          ; break;
-                case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
-            }
-        }
     },
 
     /**
@@ -231,7 +237,7 @@ mix(/** @lends Game#prototype */{
         this.togglePlay();
         this._state.ended = true;
         alert('Game Over!');
-        // this.newGame();
+        this.newGame();
     },
 
     /**
@@ -325,22 +331,19 @@ mix(/** @lends Game#prototype */{
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
-            if (left) {
-                ++this.piece.x;
+            ++this.piece.x;
+            intersects = this.board.willIntersect(this.piece);
+            if (intersects) {
+                this.piece.x -= 2;
                 intersects = this.board.willIntersect(this.piece);
-                if (intersects)
-                    --this.piece.x;
-                else
-                    return;
-            } else {
-                --this.piece.x;
-                intersects = this.board.willIntersect(this.piece);
-                if (intersects)
+                if (intersects) {
                     ++this.piece.x;
-                else
+                } else {
                     return;
+                }
+            } else {
+                return;
             }
-
             if (left)
                 this.piece.rotateRight();
             else
@@ -443,6 +446,14 @@ mix(/** @lends Game#prototype */{
         // }
     },
 
+    showOptions: function () {
+        if (this._options)
+            return this._options.show();
+
+        this._options = new Options(this.props);
+        this.showOptions();
+    },
+
     /** @private */
     _newScoreBoard: function () {
         // setup score board
@@ -498,7 +509,7 @@ mix(/** @lends Game#prototype */{
             } else if (target.name == 'new') {
                 this.reset();
             } else if (target.name == 'options') {
-
+                this.showOptions();
             }
         }, false, this);
 

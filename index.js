@@ -18,7 +18,7 @@ var Piece = require('game/Piece'),
             scoreboard: root.getElementsByClassName('scoreboard')[0]
         };
     }()),
-    ticker = new Ticker(60, 2),
+    ticker = new Ticker(),
     bag = new Bag(),
     game = new Game(),
     preview = new Preview();
@@ -28,7 +28,7 @@ preview.bag = bag;
 
 layout.preview.appendChild(preview.canvas);
 
-preview.showNext = 3;
+preview.showNext = PROPS.preview.show;
 
 // setup the game
 game.layout = layout;
