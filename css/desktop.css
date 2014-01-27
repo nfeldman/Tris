@@ -132,3 +132,47 @@ canvas {
     -webkit-transform: translateZ(0); /* hack. in current versions of chrome, this switches to hardware compositing */
     transform: translateZ(0);
 }
+
+.dlg-mask {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.options-dlg {
+    width: 300px;
+    padding: 10px;
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    margin-left: -150px;
+    background-color: #FFF;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.options-dlg span {
+    display: inline-block;
+}
+
+.options-dlg h2 {
+    margin-top: 0;
+    margin-bottom: 1.2em;
+}
+.options-dlg span + label,
+.options-dlg label + label {
+    margin-left: 10px;
+}
+
+.options-dlg input + span {
+    margin-left: 5px;
+}
+
+.options-dlg .btns-right {
+    margin-top: 1.5em;
+    text-align: right;
+}
