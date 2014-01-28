@@ -37,14 +37,14 @@ mix(/** @lends PieceRenderer.prototype */ {
         /**@private*/this._spritePos = Object.create(null);
         /**@private*/this._dx = dx;
         /**@private*/this._dy = dy;
-        /**@private*/this._tileH = 4 * dx;
-        /**@private*/this._tileW = 4 * dy;
+        /**@private*/this._tileH = 5 * dx;
+        /**@private*/this._tileW = 5 * dy;
 
         var keys  = Object.keys(models),
             floor = Math.floor,
             ctx;
 
-        this._sprites.width  = 4 * this._tileW;
+        this._sprites.width  = 5 * this._tileW;
         this._sprites.height = keys.length * this._tileH;
 
 
@@ -53,7 +53,7 @@ mix(/** @lends PieceRenderer.prototype */ {
         keys.forEach(function (k, row) {
             this._spritePos[k] = row;
             models[k].forEach(function (m, col) {
-                eachblock(m, col * 4, row * 4, function (x, y) {
+                eachblock(m, col * 5, row * 5, function (x, y) {
                     drawBlock(colors[k], x, y, dx, dy, ctx);
                 });
             });

@@ -134,7 +134,7 @@ mix(/** @lends Board#prototype */ {
         this._piece.y = piece.y - 2;
         this._piece.r = piece.r;
         this._piece.name = piece.name;
-        piece.y >= 0 && this._renderer.draw(this._piece, this._ctx);
+        this._renderer.draw(this._piece, this._ctx);
     },
 
     /**
@@ -246,25 +246,20 @@ mix(/** @lends Board#prototype */ {
      *                          bottom of the piece.
      */
     willIntersect: function (piece) {
-        var row  = 0,
-            col  = 0,
-            y    = piece.y,
-            x    = piece.x,
+        var y = piece.y,
+            x = piece.x,
             yy, xx;
 
         piece = Piece.pieces[piece.name][piece.r];
 
-        for (var bit = 0x8000; bit > 0; bit >>= 1) {
-            if (piece & bit) {
-                xx = x + col;
-                yy = y + row;
+        for (var i = 0; i < 5; i++) {
+            for (var j = 0; j < 5; j++) {
+                if (!piece[i][j])
+                    continue;
+                xx = x + j;
+                yy = y + i;
                 if (this._field[yy] == null || this._field[yy][xx] == null || !!this._field[yy][xx])
                     return true;
-            }
-
-            if (++col == 4) {
-                col = 0;
-                ++row;
             }
         }
 
