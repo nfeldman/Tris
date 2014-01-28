@@ -81,6 +81,6 @@ Object.defineProperty(Score.prototype, 'level', {
     },
     set: function (n) {
         this._level = n;
-        this.levelNode.innerHTML = n + 1;
+        this.levelNode.innerHTML = n;
     }
 })

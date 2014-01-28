@@ -9,7 +9,7 @@ var mix = require('../Grue/js/object/mix'),
 
     // inline template for now
     TMPL = '<h2>Options</h2>' +
-            '<label class="g_row">Starting Level: <input type="number" min="1" max="15" name="start_level" /></label>' +
+            '<label class="g_row">Starting Level: <input type="number" min="0" max="30" name="start_level" /></label>' +
             '<div class="g_row"><span>Up Arrow Turns:</span>' +
             '<label><input type="radio" name="up_turns_right" value="false" /><span>left</span></label> ' +
             '<label><input type="radio" name="up_turns_right" value="true" /><span>right</span></label>'  +
@@ -64,7 +64,7 @@ mix({
             }
         }
 
-        start.value = this.data.start_level + 1;
+        start.value = this.data.start_level;
 
         this._handle = DOMEvents.on(this._dom, 'click', function (e) {
             var target = e.target,
@@ -76,7 +76,7 @@ mix({
                         if (radios[i].checked)
                             this.data.up_turns_right = asBool(radios[i].value);
 
-                    this.data.start_level = Math.min(15, +start.value) - 1;
+                    this.data.start_level = Math.min(30, +start.value);
                 } else {
                     this.data = this._data;
                 }

@@ -28,11 +28,11 @@ function GameState () {
  * @private
  */
 function GameCounters () {
-    this.traveled    = 0;
     this.motionless  = 0;
     this.slideFrames = 0;
     this.softDropped = 0;
     this.hardDropped = 0;
+    this.frameCt     = 0;
 }
 
 /**
@@ -178,12 +178,30 @@ mix(/** @lends Game#prototype */{
         if (this._state.suspended || this._state.ended)
             return;
 
-        var speed   = this.score.level > 14 ? 0 : Math.floor(Math.log(15 - this.score.level) * 40),
-            actions;
-        this._counters.traveled += (speed ? 10/speed : 1);
+        var level = this.score.level,
+            framesPerDrop;
 
-        // skip rerendering if nothing has changed
-        this._state.rendering = !!this._actions.length || this._counters.traveled >= 1;
+        // this is how nintendo's original tetris handled the drop speed
+        if (9 > level)
+            framesPerDrop = 48 - (level * 5)
+        else if (level == 9)
+            framesPerDrop = 6;
+        else if (13 > level)
+            framesPerDrop = 5;
+        else if (16 > level)
+            framesPerDrop = 4;
+        else if (18 > level)
+            framesPerDrop = 3;
+        else if (29 > level)
+            framesPerDrop = 2;
+        else
+            framesPerDrop = 1;
+
+        if (++this._counters.frameCt == framesPerDrop)
+            this._counters.frameCt = 0;
+
+        // skip rerendering if no action has occured and we haven't dropped a row
+        this._state.rendering = !!this._actions.length || !this._counters.frameCt;
 
         if (this._actions.length) {
             actions = this._actions.slice(0);
@@ -203,7 +221,7 @@ mix(/** @lends Game#prototype */{
         }
 
         if (this._state.descending) {
-            if (this._counters.traveled >= 1)
+            if (!this._counters.frameCt)
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
             // if the user doesn't slide within 20 frames, lock the piece
