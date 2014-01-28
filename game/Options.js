@@ -32,13 +32,13 @@ var mix = require('../Grue/js/object/mix'),
     };
 
 function Options (opts) {
-    this.data = opts.data;
-    this._data = opts.data;
-    this.destroyOnHide = !!opts.destroyOnHide;
+    this.data  = mix(opts.data);
+    this._data = mix(opts.data);
     this._mask = createDom('div', {'class': 'dlg-mask'});
-    this._dom = null;
+    this._dom  = null;
     this._handle = null;
     this._onHide = opts.onHide;
+    this.destroyOnHide = !!opts.destroyOnHide;
     this._init();
 }
 
@@ -50,9 +50,7 @@ mix({
         this._dom = createDom('div', {'class': 'dlg options-dlg'});
         this._dom.innerHTML = TMPL;
 
-        function asBool (str) {
-            return str == 'true';
-        }
+        function asBool (str) {return str == 'true'}
 
         var start  = $('[name="start_level"]', this._dom)[0],
             radios = $('[name="up_turns_right"]', this._dom);
