@@ -1,7 +1,7 @@
-var p = require('Piece'),
+var p = require('./Piece'),
     pieces = p.pieces,
     colors = p.colors,
-    drawPiece = require('PieceRenderer').drawPiece;
+    drawBlock = require('./PieceRenderer').drawBlock;
 
 /**  @module tris/game/Preivew */
 module.exports = Preview;
@@ -31,57 +31,37 @@ function Preview () {
 
 Preview.prototype = {
     constructor: Preview,
-    // TODO an algorithm to position pieces without knowing
-    // what they are in advance.
+
     draw: function () {
         var n = this._showNextCt,
             next = this.bag.preview(n),
-            x = 0,
             y = 0,
-            nxt, pre;
+            row = false,
+            piece, x;
 
         for (var i = 0; i < n; i++) {
-            pre = nxt;
-            nxt = next[i];
-            y += 4;
-
-            switch (pre) {
-                case 'S':
-                case 'Z':
-                case 'T':
-                case 'J':
-                case 'L':
-                    if (nxt == 'O' || nxt == 'I')
-                        y -= 2;
-                    else
-                        y -= 1;
-                    break;
-                case 'I':
-                    if (nxt == 'O')
-                        y -= 2;
-                    else
-                        y -= 1;
+            piece = pieces[next[i]][0];
+            for (var j = 0; j < 5; j++) {
+                row = false;
+                for (var k = 0; k < 5; k++) {
+                    if (piece[j][k]) {
+                        if (!row) {
+                            row = true;
+                            ++y;
+                        }
+                        x = next[i] == 'I' ? k - 0.5 : next[i] == 'O' ? k + 0.5 : k;
+                        drawBlock(colors[next[i]], x, y, 20, 20, this.ctx);
+                    }
+                }
             }
-
-            if (!pre) { 
-                if (nxt != 'I' && nxt != 'O')
-                    y = 1;
-                else
-                    y = 0;
-            } else if (pre == 'O' && nxt == 'I') {
-                y -= 1;
-            }
-
-            if (nxt != 'I' && nxt != 'O')
-                x = 0.5
-            else
-                x = 0;
-
-            drawPiece(pieces[nxt][0], colors[nxt], x, y, 20, 20, 0, this.ctx);
+            ++y;
         }
+// Piece.colors[f[i][j]], j, i - 2, dx, dy, ctx
+        return this;
     },
     clear: function () {
         this.ctx.clearRect(0, 0, this._w, this._h);
+        return this;
     }
 };
 
@@ -96,8 +76,7 @@ Object.defineProperties(Preview.prototype, {
             this._bag = bag;
 
             bag.on('next', function (val) {
-                this.ctx.clearRect(0, 0, this._w, this._h);
-                this.draw();
+                this.clear().draw();
             }, this);
         }
     },
