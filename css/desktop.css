@@ -142,7 +142,7 @@ canvas {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.options-dlg {
+.dlg {
     width: 300px;
     padding: 10px;
     position: absolute;

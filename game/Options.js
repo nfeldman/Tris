@@ -1,9 +1,8 @@
-// TODO Grue needs a generic dialog system
-
 module.exports = Options;
 
-var mix = require('../Grue/js/object/mix'),
-    createDom = require('../Grue/js/dom/create'),
+var Dialog = require('./Dialog'),
+    mix = require('../Grue/js/object/mix'),
+    inherit = require('../Grue/js/OO/inherit'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     contains = require('../Grue/js/dom/contains'),
 
@@ -32,28 +31,24 @@ var mix = require('../Grue/js/object/mix'),
     };
 
 function Options (opts) {
+    opts && (opts.content = TMPL) || (opts = {content: TMPL});
     this.data  = mix(opts.data);
     this._data = mix(opts.data);
-    this._mask = createDom('div', {'class': 'dlg-mask'});
-    this._dom  = null;
     this._handle = null;
-    this._onHide = opts.onHide;
-    this.destroyOnHide = !!opts.destroyOnHide;
-    this._init();
+    Dialog.call(this, opts);
 }
 
 mix({
     _init: function () {
-        if (this._dom)
+        if (Dialog.prototype._init.apply(this, arguments))
             return;
 
-        this._dom = createDom('div', {'class': 'dlg options-dlg'});
-        this._dom.innerHTML = TMPL;
+        this.dom.className += ' options-dlg';
 
         function asBool (str) {return str == 'true'}
 
-        var start  = $('[name="start_level"]', this._dom)[0],
-            radios = $('[name="up_turns_right"]', this._dom);
+        var start  = $('[name="start_level"]', this.dom)[0],
+            radios = $('[name="up_turns_right"]', this.dom);
 
         for (var i = 0; i < radios.length; i++) {
             if (asBool(radios[i].value) == this.data.up_turns_right) {
@@ -64,7 +59,7 @@ mix({
 
         start.value = this.data.start_level;
 
-        this._handle = DOMEvents.on(this._dom, 'click', function (e) {
+        this._handle = DOMEvents.on(this.dom, 'click', function (e) {
             var target = e.target,
                 name   = target.nodeName.toLowerCase();
 
@@ -85,27 +80,13 @@ mix({
 
     },
 
-    show: function () {
-        document.body.appendChild(this._mask);
-        document.body.appendChild(this._dom);
-    },
-
-    hide: function () {
-        this._dom.parentNode.removeChild(this._dom);
-        this._mask.parentNode.removeChild(this._mask);
-        this._onHide && this._onHide(this.data);
-
-        if (this.destroyOnHide)
-            this.destroy();
-    },
-
     destroy: function () {
         DOMEvents.off(this._handle);
-        this._dom  = null;
-        this._mask = null;
         delete this.data;
+        Dialog.prototype.destroy.apply(this, arguments);
     }
 
 }, Options.prototype);
 
-// inherit(Options, Grue);
+// setup the prototype chain
+inherit(Options, Dialog);

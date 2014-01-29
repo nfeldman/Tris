@@ -13,12 +13,12 @@ module.exports = Game;
  */
 function GameState () {
     this.initial = true;
+    this.pieceIsNew = false;  // whether the piece spawned in the last update
     this.ended   = false;    // whether the game has ended
     this.playing = false;    // whether the game is active
     this.sliding = false;    // whether the current piece can slide
     this.descending = false; // whether pieces are currently falling
-    this.pieceIsNew = true;  // whether the piece spawned in the last update
-    this.rendering  = true;  // whether drawing is happening
+    this.rendering  = false;  // whether drawing is happening
     this.suspended  = false; // whether updating should be skipped
 }
 
@@ -118,6 +118,8 @@ mix(/** @lends Game#prototype */{
 
         this._piecesSeen = 0;
         this._actions.length = 0;
+
+        this.ticker.stop();
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);
@@ -260,8 +262,10 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     gameOver: function () {
-        this.togglePlay();
+        if (this._state.playing)
+            this.togglePlay();
         this._state.ended = true;
+        // TODO replace with custom dialog
         alert('Game Over!');
         this.newGame();
     },
@@ -461,15 +465,20 @@ mix(/** @lends Game#prototype */{
 
     /**
      * reset everything to a clean state
-     * @return {[type]} [description]
      */
     newGame: function () {
         // TODO pause and prompt if game hasn't ended
-        // if (this._state.playing) {
-        //     this.togglePlay();
-        // } else {
+        if (this._state.ended)
+            return this.reset();
+
+        if (this._state.playing)
+            this.togglePlay();
+
+        // TODO replace with custom dialog
+        if (confirm("Really Start Over?"))
             this.reset();
-        // }
+        else
+            this.togglePlay();
     },
 
     showOptions: function () {
@@ -542,7 +551,7 @@ mix(/** @lends Game#prototype */{
                 this.togglePlay();
                 this.board.canvas.focus();
             } else if (target.name == 'new') {
-                this.reset();
+                this.newGame();
             } else if (target.name == 'options') {
                 this.showOptions();
             }
