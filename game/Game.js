@@ -2,8 +2,18 @@ var inherit = require('../Grue/js/OO/inherit'),
     Component = require('../Grue/js/infrastructure/Component'),
     DOMEvents = require('../Grue/js/dom/events/DOMEvents'),
     mix = require('../Grue/js/object/mix'),
+    each = require('../Grue/js/functional/each'),
     Piece = require('./Piece'),
-    Options = require('./Options');
+    Options = require('./Options'),
+    ACTIONS = {
+        left: 1,
+        right: 2,
+        rotate_left: 3,
+        rotate_right: 4,
+        soft_drop: 5,
+        hard_drop: 6,
+        clear: 7
+    };
 
 module.exports = Game;
 
@@ -52,9 +62,15 @@ function Game () {
     this.scoreCtor = null;
     this.boardCtor = null;
 
+    this._keyState = {
+        down: false,
+        action: -1,
+        ct: 0
+    };
+
+    this._keyMap = Object.create(null);
+
     // these are set/reset by Game#reset (first called by Game#init)
-    this._state    = new GameState();
-    this._counters = new GameCounters();
     this._piecesSeen = 0;
     this._actions = [];
     this._options = null;
@@ -63,34 +79,17 @@ function Game () {
     this.dx = 0;
     this.dy = 0;
     this.piece  = null;
-    this._piece = new Piece(null, this.dx, this.dy);
 
     Object.defineProperties(this, {
-        _toggleBtn: {enumerable:false},
-        _state: {enumerable:false},
-        _counters: {enumerable:false},
-        _piecesSeen: {enumerable:false},
-        _actions: {enumerable:false},
-        _options: {enumerable:false},
-        _piece: {enumerable:false}
+        _toggleBtn: {value: null, writeable: true},
+        _state: {value: new GameState(), writeable: true},
+        _counters: {value: new GameCounters(), writeable: true},
+        _piecesSeen: {value: 0, writeable: true},
+        _actions: {value: []},
+        _options: {value: null, writeable: true},
+        _piece: {value: new Piece(null, this.dx, this.dy), writeable: true}
     });
 }
-
-/**
- * Actions to take
- * @static
- * @enum {number}
- * @type {Object}
- */
-Game.ACTIONS = {
-    LEFT: 1,
-    RIGHT: 2,
-    R_LEFT: 3,
-    R_RIGHT: 4,
-    SOFT: 5,
-    HARD: 6,
-    CLEAR: 7
-};
 
 Object.defineProperty(Game, 'ACTIONS', {enumerable:false});
 
@@ -112,6 +111,7 @@ mix(/** @lends Game#prototype */{
      */
     reset: function () {
         var p = this.props;
+        this.ticker.stop();
 
         this.dx = p.cellsize_x || p.cellsize,
         this.dy = p.cellsize_y || p.cellsize;
@@ -119,7 +119,12 @@ mix(/** @lends Game#prototype */{
         this._piecesSeen = 0;
         this._actions.length = 0;
 
-        this.ticker.stop();
+        each(this.props.controls, function (v, k) {
+            if (v != 80 && k != 'up_turns_right' && k != 'hard_drop')
+                this._keyMap[v] = ACTIONS[k];
+        }, this);
+
+        this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);
@@ -180,6 +185,15 @@ mix(/** @lends Game#prototype */{
         if (this._state.suspended || this._state.ended)
             return;
 
+        if (this._keyState.down) {
+            if (this._keyState.ct) {
+                --this._keyState.ct;
+            } else {
+                this._keyState.ct = 4;
+                this._actions.push(this._keyState.action);
+            }
+        }
+
         var level = this.score.level,
             framesPerDrop;
 
@@ -211,13 +225,13 @@ mix(/** @lends Game#prototype */{
 
             for (var i = 0; i < actions.length; i++) {
                 switch (actions[i]) {
-                    case Game.ACTIONS.LEFT   : this.maybeSlideLeft()    ; break;
-                    case Game.ACTIONS.RIGHT  : this.maybeSlideRight()   ; break;
-                    case Game.ACTIONS.R_LEFT : this.maybeRotateRight()  ; break;
-                    case Game.ACTIONS.R_RIGHT: this.maybeRotateLeft()   ; break;
-                    case Game.ACTIONS.SOFT   : this.maybeSlideDown(true); break;
-                    case Game.ACTIONS.HARD   : this.hardDrop()          ; break;
-                    case Game.ACTIONS.CLEAR  : return this.clearRows()  ;
+                    case ACTIONS.left : this.maybeSlideLeft() ; break;
+                    case ACTIONS.right: this.maybeSlideRight(); break;
+                    case ACTIONS.rotate_left : this.maybeRotateRight(); break;
+                    case ACTIONS.rotate_right: this.maybeRotateLeft() ; break;
+                    case ACTIONS.soft_drop: this.maybeSlideDown(true); break;
+                    case ACTIONS.hard_drop: this.hardDrop()          ; break;
+                    case ACTIONS.clear: return this.clearRows()  ;
                 }
             }
         }
@@ -246,7 +260,7 @@ mix(/** @lends Game#prototype */{
                         return this.maybeSlideDown();
                     }
                     this.board.occupy(this.piece);
-                    this._actions.push(Game.ACTIONS.CLEAR);
+                    this._actions.push(ACTIONS.clear);
                 } else {
                     this.gameOver();
                 }
@@ -458,6 +472,10 @@ mix(/** @lends Game#prototype */{
             this.nextPiece();
             this._state.initial = false;
         }
+
+        if (this._state.playing)
+            this.board.canvas.focus();
+
         this.ticker.toggle();
         this.emitEvent('playing', this._state.playing);
         return this;
@@ -482,16 +500,26 @@ mix(/** @lends Game#prototype */{
     },
 
     showOptions: function () {
+        var wasPlaying = this._state.playing;
+        wasPlaying && this.togglePlay();
+
         new Options({data: {
             up_turns_right: this.props.controls.up_turns_right,
-            start_level: this.props.start_level
+            start_level: this.props.start_level,
+            slide_fast: this.props.slide_fast
         }, destroyOnHide: true, onHide: (function (data) {
-            if (data.up_turns_right != this.props.controls.up_turns_right)
+            if (data.up_turns_right != this.props.controls.up_turns_right) {
                 this.props.controls.up_turns_right = data.up_turns_right;
+                this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
+            }
+
+            this.props.slide_fast = data.slide_fast;
 
             if (this.props.start_level != data.start_level) {
                 this.props.start_level = data.start_level;
                 this.reset();
+            } else {
+                wasPlaying && this.togglePlay();
             }
 
             localStorage.setItem('props', JSON.stringify(this.props));
@@ -547,14 +575,12 @@ mix(/** @lends Game#prototype */{
             if (name != 'button')
                 return;
 
-            if (target.name == 'toggle') {
+            if (target.name == 'toggle')
                 this.togglePlay();
-                this.board.canvas.focus();
-            } else if (target.name == 'new') {
+            else if (target.name == 'new')
                 this.newGame();
-            } else if (target.name == 'options') {
+            else if (target.name == 'options')
                 this.showOptions();
-            }
         }, false, this);
 
         this.on(this.layout.root, 'keydown', function (e) {
@@ -562,40 +588,31 @@ mix(/** @lends Game#prototype */{
                 return;
 
             var props = this.props.controls,
+                fast  = this.props.slide_fast,
                 that  = this;
 
             if (e.target == this.board.canvas && !this._state.initial) {
                 e.preventDefault();
 
-                switch (e.which) {
-                    case props.rotate_left:
-                        this._actions.push(Game.ACTIONS.R_LEFT);
-                      break;
-                    case 38: // up arrow
-                        if (!props.up_turns_right) {
-                            this._actions.push(Game.ACTIONS.R_LEFT);
-                            break;
-                        }   
-                    case props.rotate_right:
-                        this._actions.push(Game.ACTIONS.R_RIGHT);
-                      break;
-                    case props.left:
-                        this._actions.push(Game.ACTIONS.LEFT);
-                      break;
-                    case props.right:
-                        this._actions.push(Game.ACTIONS.RIGHT);
-                      break;
-                    case props.soft_drop:
-                        this._actions.push(Game.ACTIONS.SOFT);
-                      break;
-                    case props.hard_drop:
-                        this._actions.push(Game.ACTIONS.HARD);
-                      break;
-                }
-
-                if (e.which == props.play_toggle)
+                if (this._keyMap[e.which]) {
+                    if (!fast || this._keyState.down || this._keyMap[e.which] == ACTIONS.rotate_left || this._keyMap[e.which] == ACTIONS.rotate_right) {
+                        this._actions.push(this._keyMap[e.which]);
+                    } else {
+                        this._keyState.down   = true;
+                        this._keyState.action = this._keyMap[e.which];
+                    }
+                } else if (e.which == props.hard_drop) {
+                    this._actions.push(ACTIONS.hard_drop);
+                } else if (e.which == props.play_toggle) {
                     this.togglePlay();
+                }
             }
+        }, false, this);
+
+        this.on(this.layout.root, 'keyup', function (e) {
+            this._keyState.down = false;
+            this._keyState.action = 0;
+            this._keyState.ct = 0;
         }, false, this);
     },
 

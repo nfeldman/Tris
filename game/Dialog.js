@@ -32,12 +32,11 @@ mix({
     },
 
     show: function () {
-        var h = ((h = docEl.clientHeight) < window.innerHeight ? window.innerHeight : h), 
-            w = ((w = docEl.clientWidth) < window.innerWidth ? window.innerWidth : w);
-
+        // var h = ((h = docEl.clientHeight) < window.innerHeight ? window.innerHeight : h), 
+        //     w = ((w = docEl.clientWidth) < window.innerWidth ? window.innerWidth : w);
+        var h = docEl.scrollHeight + docEl.scrollTop;
 
         this._mask.style.height = h + 'px';
-        this._mask.style.width  = w + 'px';
 
         document.body.style.overflow = 'hidden';
 

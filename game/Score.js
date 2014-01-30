@@ -7,20 +7,15 @@ var mix = require('../Grue/js/object/mix');
  * Constructs an object for tracking the score in a game.
  */
 function Score () {
-    this._level = 0;
     this.rows   = 0;
     this.total  = 0;
-
-    this._handles = [];
-    this._rowsDisplayed  = 0;
-    this._totalDisplayed = 0;
     this.scoring = null;
 
     Object.defineProperties(this, {
-        _handles: {enumerable:false},
-        _rowsDisplayed: {enumerable:false},
-        _totalDisplayed: {enumerable:false},
-        _level: {enumerable: false}
+        _handles: {value: [], writable: true},
+        _rowsDisplayed: {value: 0, writable: true},
+        _totalDisplayed: {value: 0, writable: true},
+        _level: {value: 0, writable: true}
     });
 
     this.ticker = null;

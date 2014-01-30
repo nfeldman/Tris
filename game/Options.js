@@ -13,6 +13,7 @@ var Dialog = require('./Dialog'),
             '<label><input type="radio" name="up_turns_right" value="false" /><span>left</span></label> ' +
             '<label><input type="radio" name="up_turns_right" value="true" /><span>right</span></label>'  +
             '</div>' +
+            '<label class="g_row"><input type="checkbox" value="true" name="slide_fast" /> Slide faster?</label>' +
             '<div class="g_row btns-right"><button type="button" class="btn btn-small cancel-btn" name="cancel">Cancel</button> <button type="button" class="btn btn-small save-btn" name="save">Save</button>',
 
     $ = function (selector, root) {
@@ -48,7 +49,8 @@ mix({
         function asBool (str) {return str == 'true'}
 
         var start  = $('[name="start_level"]', this.dom)[0],
-            radios = $('[name="up_turns_right"]', this.dom);
+            radios = $('[name="up_turns_right"]', this.dom),
+            faster = $('[name="slide_fast"', this.dom)[0];
 
         for (var i = 0; i < radios.length; i++) {
             if (asBool(radios[i].value) == this.data.up_turns_right) {
@@ -58,6 +60,7 @@ mix({
         }
 
         start.value = this.data.start_level;
+        faster.checked = this.data.slide_fast;
 
         this._handle = DOMEvents.on(this.dom, 'click', function (e) {
             var target = e.target,
@@ -70,6 +73,7 @@ mix({
                             this.data.up_turns_right = asBool(radios[i].value);
 
                     this.data.start_level = Math.min(30, +start.value);
+                    this.data.slide_fast  = faster.checked;
                 } else {
                     this.data = this._data;
                 }
