@@ -13,15 +13,12 @@
  * @module Grue/base
  */
 
-if (typeof GRUE == 'object') {
-    console.debug('GRUE already defined');
-    return;
-}
-
-GRUE = {}; // implicit global
-
 (function (global, undefined) {
+if (typeof GRUE == 'undefined')
+    GRUE = {}; // implicit global, basically/usually the same as window.GRUE
 
+if ('version' in GRUE)
+    return;
 
 // # Basic setup --------------------------------------------------------------
 
@@ -29,7 +26,7 @@ GRUE = {}; // implicit global
 // library called Fortinbras --> specialized library called grue that included
 // Fortinbras --> death of grue and ressurection of Fortinbras --> realization
 // that grue is a better name --> grue
-GRUE.version = '2.0.1';
+GRUE.version = '2.0.2';
 
 GRUE.nop = function nop () {};
 
