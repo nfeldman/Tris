@@ -50,7 +50,7 @@ mix({
 
         var start  = $('[name="start_level"]', this.dom)[0],
             radios = $('[name="up_turns_right"]', this.dom),
-            faster = $('[name="slide_fast"', this.dom)[0];
+            faster = $('[name="slide_fast"]', this.dom)[0];
 
         for (var i = 0; i < radios.length; i++) {
             if (asBool(radios[i].value) == this.data.up_turns_right) {
