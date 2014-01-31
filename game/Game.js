@@ -71,7 +71,6 @@ function Game () {
     this._keyMap = Object.create(null);
 
     // these are set/reset by Game#reset (first called by Game#init)
-    this._piecesSeen = 0;
     this._actions = [];
     this._options = null;
     this.score   = null;
@@ -84,7 +83,7 @@ function Game () {
         _toggleBtn: {value: null, writeable: true},
         _state: {value: new GameState(), writeable: true},
         _counters: {value: new GameCounters(), writeable: true},
-        _piecesSeen: {value: 0, writeable: true},
+        _piecesSeen: {value: Object.create(null), writeable: true},
         _actions: {value: []},
         _options: {value: null, writeable: true},
         _piece: {value: new Piece(null, this.dx, this.dy), writeable: true}
@@ -116,7 +115,10 @@ mix(/** @lends Game#prototype */{
         this.dx = p.cellsize_x || p.cellsize,
         this.dy = p.cellsize_y || p.cellsize;
 
-        this._piecesSeen = 0;
+        each(Piece.pieces, function (v, k) {
+            this._piecesSeen[k] = 0;
+        }, this);
+
         this._actions.length = 0;
 
         each(this.props.controls, function (v, k) {
@@ -161,7 +163,9 @@ mix(/** @lends Game#prototype */{
         var piece = this.bag.next();
         Piece.call(this.piece, piece, this.dx, this.dy);
         Piece.call(this._piece, piece, this.dx, this.dy);
-        ++this._piecesSeen;
+
+        ++this._piecesSeen[piece];
+        // console.log(JSON.stringify(this._piecesSeen, null, '  '));
 
         GameCounters.call(this._counters);
 
@@ -272,7 +276,7 @@ mix(/** @lends Game#prototype */{
     },
 
     /**
-     * End of game logic. Stops the game, alerts the user, and call Game#newGame
+     * End-of-game logic. Stops the game, alerts the user, and call Game#newGame
      * @return {undefined}
      */
     gameOver: function () {
@@ -503,32 +507,35 @@ mix(/** @lends Game#prototype */{
         var wasPlaying = this._state.playing;
         wasPlaying && this.togglePlay();
 
-        new Options({data: {
-            up_turns_right: this.props.controls.up_turns_right,
-            start_level: this.props.start_level,
-            slide_fast: this.props.slide_fast
-        }, destroyOnHide: true, onHide: (function (data) {
-            if (data.up_turns_right != this.props.controls.up_turns_right) {
-                this.props.controls.up_turns_right = data.up_turns_right;
-                this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
-            }
+        new Options({
+            data: {
+                up_turns_right: this.props.controls.up_turns_right,
+                start_level: this.props.start_level,
+                slide_fast: this.props.slide_fast
+            }, 
+            destroyOnHide: true, 
+            onHide: (function (data) {
+                if (data.up_turns_right != this.props.controls.up_turns_right) {
+                    this.props.controls.up_turns_right = data.up_turns_right;
+                    this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
+                }
 
-            this.props.slide_fast = data.slide_fast;
+                this.props.slide_fast = data.slide_fast;
 
-            if (this.props.start_level != data.start_level) {
-                this.props.start_level = data.start_level;
-                this.reset();
-            } else {
-                wasPlaying && this.togglePlay();
-            }
+                if (this.props.start_level != data.start_level) {
+                    this.props.start_level = data.start_level;
+                    this.reset();
+                } else {
+                    wasPlaying && this.togglePlay();
+                }
 
-            localStorage.setItem('props', JSON.stringify(this.props));
-        }).bind(this)}).show();
+                localStorage.setItem('props', JSON.stringify(this.props));
+            }).bind(this)
+        }).show();
     },
 
     /** @private */
     _newScoreBoard: function () {
-        // setup score board
         this.score && this.score.destroy();
         this.score = new this.scoreCtor();
         this.score.scoring   = this.props.scoring;
