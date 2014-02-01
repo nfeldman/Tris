@@ -71,7 +71,7 @@ h2 {
 
 .meta {
     margin-left: 50px;
-    margin-top: 150px;
+    margin-top: 15px;
 }
 .scoreboard {
     border: 2px solid #555;
@@ -88,6 +88,9 @@ h2 {
     width: 200px;
 }
 
+.highscores ol {
+    list-style-type: decimal-leading-zero;
+}
 .buttons {
     margin-bottom: 10px;
     width: 200px;
@@ -178,4 +181,21 @@ canvas {
 .options-dlg .btns-right {
     margin-top: 1.5em;
     text-align: right;
+}
+
+.score-list li {
+    padding-left: 8px;
+}
+
+.score-list li > span {
+    display: inline-block;
+    width: 110px;
+}
+
+.score-list li > span + span {
+    width: 70px;
+}
+
+.score-list li:nth-child(even) {
+    background: #F5F5F5;
 }
