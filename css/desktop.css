@@ -71,7 +71,7 @@ h2 {
 
 .meta {
     margin-left: 50px;
-    margin-top: 150px;
+    margin-top: 15px;
 }
 .scoreboard {
     border: 2px solid #555;
@@ -88,6 +88,9 @@ h2 {
     width: 200px;
 }
 
+.highscores ol {
+    list-style-type: decimal-leading-zero;
+}
 .buttons {
     margin-bottom: 10px;
     width: 200px;

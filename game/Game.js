@@ -130,7 +130,7 @@ mix(/** @lends Game#prototype */{
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);
-
+        this._renderHighScore();
         this._newScoreBoard();
         this._newPlayField();
         this.preview.clear();
@@ -283,6 +283,8 @@ mix(/** @lends Game#prototype */{
         if (this._state.playing)
             this.togglePlay();
         this._state.ended = true;
+
+        this._updateHighScores();
         // TODO replace with custom dialog
         alert('Game Over!');
         this.newGame();
@@ -545,6 +547,69 @@ mix(/** @lends Game#prototype */{
         this.score.ticker = this.ticker;
         this.score.init();
         this.score.level = this.props.start_level;
+    },
+
+    /** @private */
+    _renderHighScore: function (scores) {
+        if (!this.layout.highscores)
+            this.layout.highscores = this.layout.root.getElementsByClassName('highscores')[0];
+
+        var div = this.layout.highscores,
+            ol, li;
+
+        while (div.children.length > 1) {
+            div.removeChild(div.lastChild);
+        }
+
+        if (!scores) {
+                scores = localStorage.getItem('scores');
+            if (scores) 
+                scores = JSON.parse(scores);
+            else
+                return;
+        }
+
+        ol = document.createElement('ol');
+
+        for (var i = 0; i < scores.length; i++) {
+            li = document.createElement('li');
+            li.innerHTML = '<b>total</b>: ' + scores[i].total + '; <b>level</b>: ' + scores[i].level;
+            ol.appendChild(li);
+        }
+
+        div.appendChild(ol);
+    },
+
+    /** @private */
+    _updateHighScores: function () {
+        var level = this.score.level,
+            total = this.score.total,
+            highs = localStorage.getItem('scores'),
+            i, idx;
+
+        highs = !!highs ? JSON.parse(highs) : [];
+        i = highs.length;
+        idx = highs.length;
+
+        while (i--) {
+            if (highs[i].total > total)
+                break;
+        }
+
+        ++i;
+
+        10 > idx && ++idx;
+
+        while (--idx > i)
+            highs[idx] = highs[idx - 1];
+
+        highs[i] = {
+            total: total,
+            level: level
+        };
+
+        localStorage.setItem('scores', JSON.stringify(highs));
+        this._renderHighScore(highs);
     },
 
     /** @private */
