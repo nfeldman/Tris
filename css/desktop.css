@@ -182,3 +182,20 @@ canvas {
     margin-top: 1.5em;
     text-align: right;
 }
+
+.score-list li {
+    padding-left: 8px;
+}
+
+.score-list li > span {
+    display: inline-block;
+    width: 110px;
+}
+
+.score-list li > span + span {
+    width: 70px;
+}
+
+.score-list li:nth-child(even) {
+    background: #F5F5F5;
+}

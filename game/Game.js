@@ -570,13 +570,11 @@ mix(/** @lends Game#prototype */{
         }
 
         ol = document.createElement('ol');
-
-        for (var i = 0; i < scores.length; i++) {
-            li = document.createElement('li');
-            li.innerHTML = '<b>total</b>: ' + scores[i].total + '; <b>level</b>: ' + scores[i].level;
-            ol.appendChild(li);
-        }
-
+        ol.className = 'score-list';
+        li = '';
+        for (var i = 0; i < scores.length; i++)
+            li += '<li><span>total <b>' + scores[i].total + '</b></span> <span>level <b>' + scores[i].level + '</b></span></li>';
+        ol.innerHTML = li;
         div.appendChild(ol);
     },
 
@@ -591,22 +589,35 @@ mix(/** @lends Game#prototype */{
         i = highs.length;
         idx = highs.length;
 
-        while (i--) {
-            if (highs[i].total > total)
-                break;
+        if (i) {
+            while (i--) {
+                if (highs[i].total >= total)
+                    break;
+            }
+
+            if (highs[i].total == total) {
+                if (highs[i].level == level)
+                    return;
+
+                for (var j = 0; j < highs.length; j++) {
+                    if (highs[j].total == total && highs[j].level == level)
+                        return;
+                }
+            }
+
+            if (highs[i].total > total || level > highs[i].level)
+                ++i;
+
+            10 > idx && ++idx;
+
+            while (--idx > i)
+                highs[idx] = highs[idx - 1];
         }
 
-        ++i;
-
-        10 > idx && ++idx;
-
-        while (--idx > i)
-            highs[idx] = highs[idx - 1];
-
-        highs[i] = {
+        10 > i && (highs[i] = {
             total: total,
             level: level
-        };
+        });
 
         localStorage.setItem('scores', JSON.stringify(highs));
         this._renderHighScore(highs);
