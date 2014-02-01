@@ -595,7 +595,7 @@ mix(/** @lends Game#prototype */{
                     break;
             }
 
-            if (highs[i].total == total) {
+            if (~i && highs[i].total == total) {
                 if (highs[i].level == level)
                     return;
 
@@ -605,7 +605,7 @@ mix(/** @lends Game#prototype */{
                 }
             }
 
-            if (highs[i].total > total || level > highs[i].level)
+            if (i == -1 || highs[i].total > total || level > highs[i].level)
                 ++i;
 
             10 > idx && ++idx;
