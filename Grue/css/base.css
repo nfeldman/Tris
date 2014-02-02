@@ -423,7 +423,9 @@ body {color: #0f151f}
 [draggable]::selection,
 [draggable]::-moz-selection,
 .no-select::-moz-selection,
-.no-select::selection { background: transparent; }
+.no-select::selection,
+.btn::selection,
+.btn::-moz-selection { background: transparent; }
 
 
 
