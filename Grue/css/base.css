@@ -410,7 +410,8 @@ body {color: #0f151f}
 [draggable] *,
 .no-select *,
 .no-select,
-.btn {
+.btn,
+canvas {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: rgba(0,0,0,0);
@@ -425,7 +426,9 @@ body {color: #0f151f}
 .no-select::-moz-selection,
 .no-select::selection,
 .btn::selection,
-.btn::-moz-selection { background: transparent; }
+.btn::-moz-selection,
+canvas::selection,
+canvas::-moz-selection { background: transparent; }
 
 
 
