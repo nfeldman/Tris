@@ -193,7 +193,7 @@ mix(/** @lends Game#prototype */{
             if (this._keyState.ct) {
                 --this._keyState.ct;
             } else {
-                this._keyState.ct = 4;
+                this._keyState.ct = 6;
                 this._actions.push(this._keyState.action);
             }
         }
@@ -244,7 +244,7 @@ mix(/** @lends Game#prototype */{
             if (!this._counters.frameCt)
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
-            // if the user doesn't slide within 20 frames, lock the piece
+            // if the user doesn't slide within 30 frames, lock the piece
             if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y && this.piece.r == this._piece.r)
                 ++this._counters.motionless;
             else
@@ -254,7 +254,7 @@ mix(/** @lends Game#prototype */{
             this._piece.y = this.piece.y;
             this._piece.r = this.piece.r;
 
-            if (!this._counters.slideFrames || this._counters.motionless > 19) {
+            if (!this._counters.slideFrames || this._counters.motionless > 29) {
                 if (this.piece.y) {
                     ++this.piece.y;
                     if (this.board.willIntersect(this.piece)) {
@@ -431,7 +431,14 @@ mix(/** @lends Game#prototype */{
         if (intersects) {
             if (this._state.descending) {
                 this._state.descending = false;
-                this._counters.slideFrames = Math.max(40 - (this.score.level * 2), 5);
+                if (11 > this.level)
+                    this._counters.slideFrames = 45 - (this.score.level * 2);
+                else if (25 > this.level)
+                    this._counters.slideFrames = 25 - (this.level - 10)
+                else if (40 > this.level)
+                    this._counters.slideFrames = 15;
+                else
+                    this._counters.slideFrames = 10;
             }
         } else {
             this._state.descending = true;
