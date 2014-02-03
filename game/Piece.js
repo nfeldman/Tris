@@ -4,8 +4,9 @@
  *  • the `Bag` constructor
  *
  * It also exports two data objects containing default values:
- *  • a `pieces` object, which contains an array of 4 numbers for each piece
- *    (tetromino), each number representing one orientation of that piece
+ *  • a `pieces` object, mapping the name of each piece to an array
+ *    of 4 arrays, each value of which models one orientation of the
+ *    named piece
  *  • a `colors` object, which maps the name of a piece to its color
  */
 

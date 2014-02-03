@@ -56,7 +56,7 @@ Preview.prototype = {
             }
             ++y;
         }
-// Piece.colors[f[i][j]], j, i - 2, dx, dy, ctx
+
         return this;
     },
     clear: function () {

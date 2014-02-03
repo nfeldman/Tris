@@ -6,8 +6,8 @@ module.exports = function eachblock (piece, x, y, callback, thisObj) {
             if (piece[i][j])
                 stop = callback.call(thisObj, x + j, y + i);
 
-        if (stop)
-            return;
+            if (stop)
+                return;
         }
     }
 }
