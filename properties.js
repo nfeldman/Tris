@@ -24,5 +24,10 @@ module.exports = {
         "show": 3
     },
     "start_level": 5,
-    "slide_fast": false
+    "slide_fast": false,
+    "use_crazy_piece": false,
+    "use_keyboard_entropy": false,
+    // @see <http://tetrisconcept.net/wiki/Random_Generator>
+    "use_the_random_generator": true,
+    "bag_size": 7
 };

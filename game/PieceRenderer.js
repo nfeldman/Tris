@@ -67,9 +67,13 @@ mix(/** @lends PieceRenderer.prototype */ {
      * @param  {Piece} piece
      * @param  {CanvasRenderingContext2D} ctx
      */
-    draw: function (piece, ctx) {
+    draw: function (piece, offset, ctx) {
+        if (ctx == null) {
+            ctx = offset;
+            offset = 0;
+        }
         if (this._spritePos[piece.name] == null)
-            throw new Error('Was expecting one of "' + Object.keys(this.models)
+            throw new Error('Was expecting one of "' + Object.keys(this._models)
                         .join('", "') + '" but saw ' + piece.name + ' instead');
 
         ctx.drawImage(
@@ -79,7 +83,7 @@ mix(/** @lends PieceRenderer.prototype */ {
                         this._tileW, 
                         this._tileH, 
                         piece.x * this._dx,
-                        piece.y * this._dy,
+                        (piece.y + offset) * this._dy,
                         this._tileW, 
                         this._tileH
                      );

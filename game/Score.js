@@ -27,8 +27,8 @@ function Score () {
 
 // add properties to the prototype without overwriting the constructor
 mix(/** @lends Score#prototype */ {
-    set: function (rowsCleared, softDropCt, hardDropCt) {
-        var total = (this.scoring.line_multipliers[rowsCleared - 1] * (this.level + 1)) + softDropCt + (hardDropCt * 2);
+    set: function (rowsCleared, softDropCt, hardDropCt, bonus) {
+        var total = (this.scoring.line_multipliers[rowsCleared - 1] * (this.level + 1)) + softDropCt + (hardDropCt * 2) + bonus;
 
         this.total += total;
         this.rows  += rowsCleared;

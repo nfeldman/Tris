@@ -134,7 +134,7 @@ mix(/** @lends Board#prototype */ {
         this._piece.y = piece.y - 2;
         this._piece.r = piece.r;
         this._piece.name = piece.name;
-        this._renderer.draw(this._piece, this._ctx);
+        this._renderer.draw(piece, -2, this._ctx);
     },
 
     /**
@@ -159,7 +159,7 @@ mix(/** @lends Board#prototype */ {
             set  = {},
             occupied = new Dict();
 
-        eachblock(Piece.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
+        eachblock(piece.getModel(), piece.x, piece.y, function (x, y) {
             if (set[y])
                 return;
             set[y] = true;
@@ -248,13 +248,12 @@ mix(/** @lends Board#prototype */ {
     willIntersect: function (piece) {
         var y = piece.y,
             x = piece.x,
+            model = piece.getModel(),
             yy, xx;
-
-        piece = Piece.pieces[piece.name][piece.r];
 
         for (var i = 0; i < 5; i++) {
             for (var j = 0; j < 5; j++) {
-                if (!piece[i][j])
+                if (!model[i][j])
                     continue;
                 xx = x + j;
                 yy = y + i;
@@ -277,7 +276,7 @@ mix(/** @lends Board#prototype */ {
         var outOfBounds = false,
             l = piece.name;
 
-        eachblock(Piece.pieces[piece.name][piece.r], piece.x, piece.y, function (x, y) {
+        eachblock(piece.getModel(), piece.x, piece.y, function (x, y) {
             if (0 > y || y >= this.cols)
                 return outOfBounds = true;
             this._field[y][x] = l;

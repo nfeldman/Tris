@@ -4,7 +4,6 @@ var inherit = require('../Grue/js/OO/inherit'),
     mix = require('../Grue/js/object/mix'),
     each = require('../Grue/js/functional/each'),
     Piece = require('./Piece'),
-    Options = require('./Options'),
     ACTIONS = {
         left: 1,
         right: 2,
@@ -16,6 +15,7 @@ var inherit = require('../Grue/js/OO/inherit'),
     };
 
 module.exports = Game;
+Game.ACTIONS = ACTIONS;
 
 /**
  * Constructs a data object that tracks game flags
@@ -68,7 +68,7 @@ function Game () {
         ct: 0
     };
 
-    this._keyMap = Object.create(null);
+    this.keyMap = Object.create(null);
 
     // these are set/reset by Game#reset (first called by Game#init)
     this._actions = [];
@@ -123,10 +123,10 @@ mix(/** @lends Game#prototype */{
 
         each(this.props.controls, function (v, k) {
             if (v != 80 && k != 'up_turns_right' && k != 'hard_drop')
-                this._keyMap[v] = ACTIONS[k];
+                this.keyMap[v] = ACTIONS[k];
         }, this);
 
-        this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
+        this.keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);
@@ -157,11 +157,8 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     nextPiece: function () {
-        if (!this.piece)
-            this.piece = new Piece(null, this.dx, this.dy);
-
-        var piece = this.bag.next();
-        Piece.call(this.piece, piece, this.dx, this.dy);
+        var piece  = this.bag.next();
+        this.piece = new Piece(piece, this.dx, this.dy);
         Piece.call(this._piece, piece, this.dx, this.dy);
 
         ++this._piecesSeen[piece];
@@ -186,7 +183,7 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     update: function (e) {
-        if (this._state.suspended || this._state.ended)
+        if (!this._state.playing || this._state.suspended || this._state.ended)
             return;
 
         if (this._keyState.down) {
@@ -410,9 +407,9 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     clearRows: function () {
-        var rows = this.board.maybeClearRows(this.piece);
+        var rows  = this.board.maybeClearRows(this.piece);
         if (rows)
-            this.score.set(rows, this._counters.softDropped, this._counters.hardDropped);
+            this.score.set(rows, this._counters.softDropped, this._counters.hardDropped, this.piece._name == 'R' ? this.level + random(1, 100) : 0);
         else
             this.nextPiece();
     },
@@ -453,7 +450,7 @@ mix(/** @lends Game#prototype */{
      * @return {undefined}
      */
     render: function (e) {
-        if (!this._state.rendering || this._state.ended)
+        if (!this._state.playing || !this._state.rendering || this._state.ended)
             return;
 
         this.board.drawPiece(this.piece, this._state.pieceIsNew);
@@ -480,6 +477,11 @@ mix(/** @lends Game#prototype */{
      * @return {this}
      */
     togglePlay: function () {
+        // start the game loop up on the first call to toggle play, but don't
+        // suspend it on subsequent calls
+        if (!this._state.playing && !this.ticker.playing)
+            this.ticker.toggle();
+
         this._state.playing = !this._state.playing;
         if (this._state.initial) {
             this.nextPiece();
@@ -489,7 +491,7 @@ mix(/** @lends Game#prototype */{
         if (this._state.playing)
             this.board.canvas.focus();
 
-        this.ticker.toggle();
+        // this.ticker.toggle();
         this.emitEvent('playing', this._state.playing);
         return this;
     },
@@ -510,37 +512,6 @@ mix(/** @lends Game#prototype */{
             this.reset();
         else
             this.togglePlay();
-    },
-
-    showOptions: function () {
-        var wasPlaying = this._state.playing;
-        wasPlaying && this.togglePlay();
-
-        new Options({
-            data: {
-                up_turns_right: this.props.controls.up_turns_right,
-                start_level: this.props.start_level,
-                slide_fast: this.props.slide_fast
-            }, 
-            destroyOnHide: true, 
-            onHide: (function (data) {
-                if (data.up_turns_right != this.props.controls.up_turns_right) {
-                    this.props.controls.up_turns_right = data.up_turns_right;
-                    this._keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
-                }
-
-                this.props.slide_fast = data.slide_fast;
-
-                if (this.props.start_level != data.start_level) {
-                    this.props.start_level = data.start_level;
-                    this.reset();
-                } else {
-                    wasPlaying && this.togglePlay();
-                }
-
-                localStorage.setItem('props', JSON.stringify(this.props));
-            }).bind(this)
-        }).show();
     },
 
     /** @private */
@@ -658,21 +629,6 @@ mix(/** @lends Game#prototype */{
         var that = this,
             handles = this.__grue_props.dom_handles;
 
-        this.on(this.layout.root, 'click', function (e) {
-            var target = e.target,
-                name   = target.nodeName.toLowerCase();
-
-            if (name != 'button')
-                return;
-
-            if (target.name == 'toggle')
-                this.togglePlay();
-            else if (target.name == 'new')
-                this.newGame();
-            else if (target.name == 'options')
-                this.showOptions();
-        }, false, this);
-
         this.on(this.layout.root, 'keydown', function (e) {
             if (this._state.ended)
                 return;
@@ -684,12 +640,12 @@ mix(/** @lends Game#prototype */{
             if (e.target == this.board.canvas && !this._state.initial) {
                 e.preventDefault();
 
-                if (this._keyMap[e.which]) {
-                    if (!fast || this._keyState.down || this._keyMap[e.which] == ACTIONS.rotate_left || this._keyMap[e.which] == ACTIONS.rotate_right) {
-                        this._actions.push(this._keyMap[e.which]);
+                if (this.keyMap[e.which]) {
+                    if (!fast || this._keyState.down || this.keyMap[e.which] == ACTIONS.rotate_left || this.keyMap[e.which] == ACTIONS.rotate_right) {
+                        this._actions.push(this.keyMap[e.which]);
                     } else {
                         this._keyState.down   = true;
-                        this._keyState.action = this._keyMap[e.which];
+                        this._keyState.action = this.keyMap[e.which];
                     }
                 } else if (e.which == props.hard_drop) {
                     this._actions.push(ACTIONS.hard_drop);
