@@ -53,6 +53,11 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
     },
     
     getGenFnToUse = function () {
+            if (props.use_keyboard_entropy)
+                !keypressHandle && useKeypress();
+            else
+                keypressHandle && dontUseKeypress();
+
             if (props.use_the_random_generator) {
                 return genFnFactory(props.use_crazy_piece ? extendedPieceNames : defaultPieceNames, props.use_keyboard_entropy && entropy)
             } else {
@@ -85,7 +90,7 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
             destroyOnHide: true, 
             onHide: (function (data) {
                 var reset = this.props.start_level != data.start_level,
-                    changeBag = this.prop.use_keyboard_entropy != data.use_keyboard_entropy || this.props.use_the_random_generator != data.use_the_random_generator || this.props.use_crazy_piece != data.use_crazy_piece;
+                    changeBag = this.props.use_keyboard_entropy != data.use_keyboard_entropy || this.props.use_the_random_generator != data.use_the_random_generator || this.props.use_crazy_piece != data.use_crazy_piece;
 
                 each(data, function (v, k) {
                     if (k in this.props)
@@ -116,7 +121,9 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 localStorage.setItem('props', JSON.stringify(this.props));
             }).bind(this)
         }).show();
-    }).bind(game);
+    }).bind(game),
+
+    keypressHandle;
 
 DOMEvents.on(layout.root, 'click', function (e) {
     var target = e.target,
@@ -133,10 +140,17 @@ DOMEvents.on(layout.root, 'click', function (e) {
         showOptions();
 }, false, game);
 
-// use the time of key presses rather than Math.random as an entropy source
-DOMEvents.on(document, 'keydown', function () {
-    entropy.push(now());
-}, false);
+function useKeypress () {
+    // use the time of key presses rather than Math.random as an entropy source
+    keypressHandle = DOMEvents.on(document, 'keydown', function () {
+        entropy.push(now());
+    }, false);
+}
+
+function dontUseKeypress () {
+    keypressHandle && DOMEvents.off(keypressHandle);
+    keypressHandle = null;
+}
 
 
 bag.size = props.bag_size;
