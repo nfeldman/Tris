@@ -85,7 +85,8 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 use_crazy_piece: this.props.use_crazy_piece,
                 use_keyboard_entropy: this.props.use_keyboard_entropy,
                 use_the_random_generator: this.props.use_the_random_generator,
-                bag_size: this.props.bag_size
+                bag_size: this.props.bag_size,
+                max_speed: this.props.max_speed || -1
             }, 
             destroyOnHide: true, 
             onHide: (function (data) {
@@ -103,6 +104,7 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 }
 
                 this.props.slide_fast = data.slide_fast;
+                this.props.max_speed  = data.max_speed;
 
                 bag.size = data.bag_size;
                 if (changeBag) {

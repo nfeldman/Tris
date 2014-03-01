@@ -15,6 +15,7 @@ var Dialog = require('./Dialog'),
             '<label><input type="radio" name="up_turns_right" value="false" /><span>left</span></label> ' +
             '<label><input type="radio" name="up_turns_right" value="true" /><span>right</span></label>'  +
             '</div>' +
+            '<div><label>Max Speed: <input type="text" name="max_speed" /></label> <small>-1 for default speeds. Speed is frames per row. Levels 0 - 9 are calculated as 48 - (5 * level); levels 10 - 12 default to 5; levels 13 - 15 default to 4; levels 16 and 17 default to 3; levels 18 - 28 default to 2 and 29 and above default to 1.</small></div>' +
             '<div><label><input type="checkbox" name="slide_fast" /> Slide faster?</label></div>' +
             '<div><label><input type="checkbox" name="crazy_piece" /> Use crazy piece?</label></div>' +
             '<div><label><input type="checkbox" name="key_entropy" /> Use key press as entropy source?</label></div>' +
@@ -60,7 +61,8 @@ mix({
             entropy = $('[name="key_entropy"]', this.dom)[0],
             rGen    = $('[name="random_generator"]', this.dom)[0],
             bagWrap = $('.bag-size', this.dom)[0],
-            bagSize = $('[name="bag_size"]', bagWrap)[0];
+            bagSize = $('[name="bag_size"]', bagWrap)[0],
+            maxSpeed = $('[name="max_speed"]', this.dom)[0];
 
         for (var i = 0; i < radios.length; i++) {
             if (asBool(radios[i].value) == this.data.up_turns_right) {
@@ -75,6 +77,7 @@ mix({
         entropy.checked = this.data.use_keyboard_entropy;
         bagSize.value = this.data.bag_size;
         rGen.checked = this.data.use_the_random_generator;
+        maxSpeed.value = this.data.max_speed || -1;
 
         this.data.use_the_random_generator && removeClass(bagWrap, 'hidden');
 
@@ -101,6 +104,7 @@ mix({
                     this.data.use_the_random_generator = rGen.checked;
                     this.data.bag_size = +bagSize.value;
                     this.data.use_keyboard_entropy = entropy.checked;
+                    this.data.max_speed = +maxSpeed.value;
                 } else {
                     this.data = this._data;
                 }

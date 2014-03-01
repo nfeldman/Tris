@@ -196,7 +196,8 @@ mix(/** @lends Game#prototype */{
         }
 
         var level = this.score.level,
-            framesPerDrop;
+            max   = this.props.max_speed,
+            framesPerDrop, len;
 
         // this is how nintendo's original tetris handled the drop speed
         if (9 > level)
@@ -213,6 +214,9 @@ mix(/** @lends Game#prototype */{
             framesPerDrop = 2;
         else
             framesPerDrop = 1;
+
+        if (max > framesPerDrop)
+            framesPerDrop = max;
 
         if (++this._counters.frameCt == framesPerDrop)
             this._counters.frameCt = 0;

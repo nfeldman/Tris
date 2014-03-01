@@ -29,5 +29,6 @@ module.exports = {
     "use_keyboard_entropy": false,
     // @see <http://tetrisconcept.net/wiki/Random_Generator>
     "use_the_random_generator": true,
-    "bag_size": 7
+    "bag_size": 7,
+    "max_speed": -1
 };
