@@ -17,6 +17,41 @@ var inherit = require('../Grue/js/OO/inherit'),
 module.exports = Game;
 Game.ACTIONS = ACTIONS;
 
+function Actions () {
+    this._ptr = 0;
+    Object.defineProperty(this, '_ptr', {enumerable: false});
+    this.items = new Array(20);
+}
+
+Actions.prototype.push = function () {
+    for (var i = 0; i < arguments.length; i++)
+        this.items[this.ptr++] = arguments[i];
+};
+
+Object.defineProperty(Actions.prototype, 'ptr', {
+    set: function (n) {
+        if (n > 19)
+            n = 0;
+        this._ptr = n;
+    },
+    get: function () {
+        return this._ptr;
+    },
+    enumerable: true
+});
+
+Object.defineProperty(Actions.prototype, 'length', {
+    set: function (n) {
+        if (n > 19)
+            n = 0;
+        this._ptr = n;
+    },
+    get: function () {
+        return this._ptr;
+    },
+    enumerable: true
+});
+
 /**
  * Constructs a data object that tracks game flags
  * @private
@@ -71,7 +106,7 @@ function Game () {
     this.keyMap = Object.create(null);
 
     // these are set/reset by Game#reset (first called by Game#init)
-    this._actions = [];
+    this._actions = new Actions();
     this._options = null;
     this.score   = null;
     this.preview = null;
@@ -84,8 +119,6 @@ function Game () {
         _state: {value: new GameState(), writeable: true},
         _counters: {value: new GameCounters(), writeable: true},
         _piecesSeen: {value: Object.create(null), writeable: true},
-        _actions: {value: []},
-        _options: {value: null, writeable: true},
         _piece: {value: new Piece(null, this.dx, this.dy), writeable: true}
     });
 }
@@ -224,21 +257,19 @@ mix(/** @lends Game#prototype */{
         // skip rerendering if no action has occured and we haven't dropped a row
         this._state.rendering = !!this._actions.length || !this._counters.frameCt;
 
-        if (this._actions.length) {
-            actions = this._actions.slice(0);
-            this._actions.length = 0;
-
-            for (var i = 0; i < actions.length; i++) {
-                switch (actions[i]) {
+        if (len = this._actions.length) {
+            for (var i = 0; i < len; i++) {
+                switch (this._actions.items[i]) {
                     case ACTIONS.left : this.maybeSlideLeft() ; break;
                     case ACTIONS.right: this.maybeSlideRight(); break;
                     case ACTIONS.rotate_left : this.maybeRotateRight(); break;
                     case ACTIONS.rotate_right: this.maybeRotateLeft() ; break;
                     case ACTIONS.soft_drop: this.maybeSlideDown(true); break;
                     case ACTIONS.hard_drop: this.hardDrop()          ; break;
-                    case ACTIONS.clear: return this.clearRows()  ;
+                    case ACTIONS.clear: this._actions.length = 0; return this.clearRows();
                 }
             }
+            this._actions.length = 0;
         }
 
         if (this._state.descending) {
