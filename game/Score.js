@@ -52,10 +52,12 @@ mix(/** @lends Score#prototype */ {
             }
 
             if (this.total > this._totalDisplayed) {
-                this._totalDisplayed += 10;
-                if (this._totalDisplayed > this.total)
-                    this._totalDisplayed = this.total;
-                this.totalNode.innerHTML = this._totalDisplayed;
+            //     this._totalDisplayed += 10;
+            //     if (this._totalDisplayed > this.total)
+            //         this._totalDisplayed = this.total;
+            //     this.totalNode.innerHTML = this._totalDisplayed;
+            this.totalNode.innerHTML = this.total;
+            this._totalDisplayed = this.total;
             }
         }, this).lastRegisteredHandler);
     },
