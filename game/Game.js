@@ -464,9 +464,9 @@ mix(/** @lends Game#prototype */{
             if (this._state.descending) {
                 this._state.descending = false;
                 if (11 > this.level)
-                    this._counters.slideFrames = 45 - (this.score.level * 2);
+                    this._counters.slideFrames = 35//45 - (this.score.level * 2);
                 else if (25 > this.level)
-                    this._counters.slideFrames = 25 - (this.level - 10)
+                    this._counters.slideFrames = 28//25 - (this.level - 10)
                 else if (40 > this.level)
                     this._counters.slideFrames = 15;
                 else
