@@ -127,7 +127,7 @@ Object.defineProperty(Game, 'ACTIONS', {enumerable:false});
 
 // add properties to the prototype without overwriting the constructor
 mix(/** @lends Game#prototype */{
-    /** 
+    /**
      * A convention follwed by Grue Components, advertises what events will
      * be emitted by a Game object.
      */
@@ -276,25 +276,21 @@ mix(/** @lends Game#prototype */{
             if (!this._counters.frameCt)
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
-            // if the user doesn't slide within 30 frames, lock the piece
-            if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y && this.piece.r == this._piece.r)
-                ++this._counters.motionless;
-            else
-                this._counters.motionless = 0;
+        // if the user doesn't slide within 30 frames, lock the piece
+        if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y)
+            ++this._counters.motionless;
+        else
+            this._counters.motionless = 0;
 
             this._piece.x = this.piece.x;
             this._piece.y = this.piece.y;
-            this._piece.r = this.piece.r;
 
-            if (!this._counters.slideFrames || this._counters.motionless > 29) {
+            if (1 > this._counters.slideFrames || this._counters.motionless > 9) {
                 if (this.piece.y) {
-                    ++this.piece.y;
-                    if (this.board.willIntersect(this.piece)) {
-                        --this.piece.y;
-                    } else {
-                        this._state.descending = false;
-                        return this.maybeSlideDown();
-                    }
+                    if (this.maybeToggleDescent())
+                        return;
+
+                    this._state.descending = false;
                     this.board.occupy(this.piece);
                     this._actions.push(ACTIONS.clear);
                 } else {
@@ -413,6 +409,7 @@ mix(/** @lends Game#prototype */{
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
         var intersects = this.board.willIntersect(this.piece);
         if (intersects) {
+            // try wall kicks
             ++this.piece.x;
             intersects = this.board.willIntersect(this.piece);
             if (intersects) {
@@ -426,6 +423,14 @@ mix(/** @lends Game#prototype */{
             } else {
                 return;
             }
+
+            // --this.piece.y;
+            // intersects = this.board.willIntersect(this.piece);
+            // if (intersects)
+            //     ++this.piece.y;
+            // else
+            //     return;
+
             if (left)
                 this.piece.rotateRight();
             else
@@ -463,11 +468,7 @@ mix(/** @lends Game#prototype */{
         if (intersects) {
             if (this._state.descending) {
                 this._state.descending = false;
-                if (11 > this.level)
-                    this._counters.slideFrames = 35//45 - (this.score.level * 2);
-                else if (25 > this.level)
-                    this._counters.slideFrames = 28//25 - (this.level - 10)
-                else if (40 > this.level)
+                if (20 > this.score.level)
                     this._counters.slideFrames = 15;
                 else
                     this._counters.slideFrames = 10;
@@ -507,7 +508,7 @@ mix(/** @lends Game#prototype */{
     },
 
     /**
-     * Toggles the game loop, updates the `playing` flag, 
+     * Toggles the game loop, updates the `playing` flag,
      * and emits a `playing` event.
      * @return {this}
      */
@@ -576,7 +577,7 @@ mix(/** @lends Game#prototype */{
 
         if (!scores) {
                 scores = localStorage.getItem('scores');
-            if (scores) 
+            if (scores)
                 scores = JSON.parse(scores);
             else
                 return;
