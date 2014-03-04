@@ -258,11 +258,11 @@ mix(/** @lends Board#prototype */ {
                 xx = x + j;
                 yy = y + i;
                 if (this._field[yy] == null || this._field[yy][xx] == null || !!this._field[yy][xx])
-                    return true;
+                    return xx;
             }
         }
 
-        return false;
+        return null;
     },
 
     /**

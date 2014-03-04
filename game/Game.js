@@ -205,7 +205,7 @@ mix(/** @lends Game#prototype */{
 
         this.board.refresh();
 
-        if (this.board.willIntersect(this.piece))
+        if (this.board.willIntersect(this.piece) != null)
             this.gameOver();
     },
 
@@ -277,13 +277,14 @@ mix(/** @lends Game#prototype */{
                 this.maybeSlideDown();
         } else if (this._state.sliding) {
         // if the user doesn't slide within 30 frames, lock the piece
-        if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y)
+        if (this.piece.type == this._piece.type && this.piece.x == this._piece.x && this.piece.y == this._piece.y && this.piece.r == this._piece.r)
             ++this._counters.motionless;
         else
             this._counters.motionless = 0;
 
             this._piece.x = this.piece.x;
             this._piece.y = this.piece.y;
+            this._piece.y = this.piece.r;
 
             if (1 > this._counters.slideFrames || this._counters.motionless > 9) {
                 if (this.piece.y) {
@@ -393,7 +394,7 @@ mix(/** @lends Game#prototype */{
             ++this.piece.x;
 
         var intersects = this.board.willIntersect(this.piece);
-        if (intersects) {
+        if (intersects != null) {
             if (left)
                 ++this.piece.x;
             else
@@ -408,28 +409,22 @@ mix(/** @lends Game#prototype */{
     _maybeRotate: function (left) {
         left ? this.piece.rotateLeft() : this.piece.rotateRight();
         var intersects = this.board.willIntersect(this.piece);
-        if (intersects) {
-            // try wall kicks
-            ++this.piece.x;
-            intersects = this.board.willIntersect(this.piece);
-            if (intersects) {
-                this.piece.x -= 2;
-                intersects = this.board.willIntersect(this.piece);
-                if (intersects) {
-                    ++this.piece.x;
-                } else {
-                    return;
-                }
-            } else {
-                return;
-            }
 
-            // --this.piece.y;
-            // intersects = this.board.willIntersect(this.piece);
-            // if (intersects)
-            //     ++this.piece.y;
-            // else
-            //     return;
+        if (intersects != null) {
+            // try wall kicks -- only at actual walls
+            if (1 > intersects) {
+                ++this.piece.x;
+                intersects = this.board.willIntersect(this.piece);
+                if (intersects == null)
+                    return;
+                --this.piece.x;
+            } else if (intersects == 10) { // TODO board width is supposed to be configurable
+                --this.piece.x;
+                intersects = this.board.willIntersect(this.piece);
+                if (intersects == null)
+                    return;
+                ++this.piece.x;
+            }
 
             if (left)
                 this.piece.rotateRight();
@@ -465,7 +460,7 @@ mix(/** @lends Game#prototype */{
         var intersects = this.board.willIntersect(this.piece);
         --this.piece.y;
 
-        if (intersects) {
+        if (intersects != null) {
             if (this._state.descending) {
                 this._state.descending = false;
                 if (20 > this.score.level)
