@@ -149,7 +149,7 @@ canvas {
 }
 
 .dlg {
-    width: 300px;
+    width: 500px;
     padding: 10px;
     position: absolute;
     top: 50px;
@@ -181,6 +181,10 @@ canvas {
 .options-dlg .btns-right {
     margin-top: 1.5em;
     text-align: right;
+}
+.options-dlg .g_row + div,
+.options-dlg div + div {
+    margin-top: 1em;
 }
 
 .score-list li {
