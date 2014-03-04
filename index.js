@@ -73,7 +73,7 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
 
     each = require('./Grue/js/functional/each'),
 
-    showOptions = (function () {
+    showOptions = (function (message) {
         var wasPlaying = this._state.playing;
         wasPlaying && this.togglePlay();
 
@@ -86,8 +86,9 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 use_keyboard_entropy: this.props.use_keyboard_entropy,
                 use_the_random_generator: this.props.use_the_random_generator,
                 bag_size: this.props.bag_size,
-                max_speed: this.props.max_speed || -1
+                max_level: this.props.max_level || -1
             }, 
+            message: message,
             destroyOnHide: true, 
             onHide: (function (data) {
                 var reset = this.props.start_level != data.start_level,
@@ -104,7 +105,8 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 }
 
                 this.props.slide_fast = data.slide_fast;
-                this.props.max_speed  = data.max_speed;
+                this.props.max_level  = data.max_level;
+                this.setMaxLevel(data.max_level);
 
                 bag.size = data.bag_size;
                 if (changeBag) {
@@ -173,5 +175,9 @@ game.boardCtor = Board;
 game.scoreCtor = Score;
 game.init();
 
-if (!props._user_configured)
-    showOptions();
+if (!props._user_configured || !props.version || props.version.major != PROPS.version.major || props.version.minor != PROPS.version.minor) {
+    debugger;
+    showOptions('Gruetris has been updated. Please check your settings.');
+    props.version = PROPS.version;
+    props.version_string = PROPS.version_string;
+}

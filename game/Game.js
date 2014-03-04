@@ -128,16 +128,6 @@ Object.defineProperty(Game, 'ACTIONS', {enumerable:false});
 // add properties to the prototype without overwriting the constructor
 mix(/** @lends Game#prototype */{
     /**
-     * A convention follwed by Grue Components, advertises what events will
-     * be emitted by a Game object.
-     */
-    publishes: Object.create(Component.prototype.publishes, {
-        levelup: {value:true},
-        scoreChange: {value:true},
-        playing: {value:true}
-    }),
-
-    /**
      * Resets the state of all components
      * @return {undefined}
      */
@@ -229,7 +219,6 @@ mix(/** @lends Game#prototype */{
         }
 
         var level = this.score.level,
-            max   = this.props.max_speed,
             framesPerDrop, len;
 
         // this is how nintendo's original tetris handled the drop speed
@@ -247,9 +236,6 @@ mix(/** @lends Game#prototype */{
             framesPerDrop = 2;
         else
             framesPerDrop = 1;
-
-        if (max > framesPerDrop)
-            framesPerDrop = max;
 
         if (++this._counters.frameCt == framesPerDrop)
             this._counters.frameCt = 0;
@@ -545,6 +531,10 @@ mix(/** @lends Game#prototype */{
             this.togglePlay();
     },
 
+    setMaxLevel: function (max) {
+        this.score.maxLevel = max;
+    },
+
     /** @private */
     _newScoreBoard: function () {
         this.score && this.score.destroy();
@@ -555,7 +545,8 @@ mix(/** @lends Game#prototype */{
         this.score.rowsNode  = this.layout.scoreboard.firstElementChild.nextElementSibling.lastChild;
         this.score.ticker = this.ticker;
         this.score.init();
-        this.score.level = this.props.start_level;
+        this.score.level    = this.props.start_level;
+        this.score.maxLevel = this.props.max_level;
     },
 
     /** @private */

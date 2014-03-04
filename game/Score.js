@@ -7,15 +7,16 @@ var mix = require('../Grue/js/object/mix');
  * Constructs an object for tracking the score in a game.
  */
 function Score () {
-    this.rows   = 0;
-    this.total  = 0;
-    this.scoring = null;
+    this.rows     = 0;
+    this.total    = 0;
+    this.scoring  = null;
 
     Object.defineProperties(this, {
         _handles: {value: [], writable: true},
         _rowsDisplayed: {value: 0, writable: true},
         _totalDisplayed: {value: 0, writable: true},
-        _level: {value: 0, writable: true}
+        _level: {value: 0, writable: true},
+        _maxLevel: {value: -1, writable: true}
     });
 
     this.ticker = null;
@@ -33,7 +34,7 @@ mix(/** @lends Score#prototype */ {
         this.total += total;
         this.rows  += rowsCleared;
 
-        if (1 >= (this.level * 10) / this.rows)
+        if (this.maxLevel != -1 ? this.maxLevel > this.level && 1 >= (1+this.level) * 10 / this.rows : 1 >= (1+this.level) * 10 / this.rows)
             ++this.level;
     },
     /**
@@ -80,4 +81,15 @@ Object.defineProperty(Score.prototype, 'level', {
         this._level = n;
         this.levelNode.innerHTML = n;
     }
-})
+});
+
+Object.defineProperty(Score.prototype, 'maxLevel', {
+    get: function () {
+        return this._maxLevel;
+    },
+    set: function (n) {
+        this._maxLevel = n;
+        if (this._maxLevel > -1 && this._maxLevel < this._level)
+            this.level = n;
+    }
+});

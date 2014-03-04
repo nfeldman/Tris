@@ -7,15 +7,18 @@ var Dialog = require('./Dialog'),
     addClass  = require('../Grue/js/dom/addClass'),
     removeClass  = require('../Grue/js/dom/removeClass'),
     contains = require('../Grue/js/dom/contains'),
-
-    // inline template for now
+ 
+    // inline template  for now
     TMPL = '<h2>Options</h2>' +
-            '<label class="g_row">Starting Level: <input type="number" min="0" max="30" name="start_level" /></label>' +
+            '${message}' +
+            '<div class="g_row">' +
+                '<label>Starting Level: <input type="number" min="0" max="30" name="start_level" style="width:50px" /></label>' +
+                ' <label>Max Level: <input type="number" title="-1 for unlimited. The rate of descent increases with the level." name="max_level" step="1" style="width:50px" /></label>' +
+            '</div>' +
             '<div class="g_row"><span>Up Arrow Turns:</span>' +
             '<label><input type="radio" name="up_turns_right" value="false" /><span>left</span></label> ' +
             '<label><input type="radio" name="up_turns_right" value="true" /><span>right</span></label>'  +
-            '</div>' +
-            '<div><label>Max Speed: <input type="text" name="max_speed" /></label> <small>-1 for default speeds. Speed is frames per row. Levels 0 - 9 are calculated as 48 - (5 * level); levels 10 - 12 default to 5; levels 13 - 15 default to 4; levels 16 and 17 default to 3; levels 18 - 28 default to 2 and 29 and above default to 1.</small></div>' +
+            '</div>' + 
             '<div><label><input type="checkbox" name="slide_fast" /> Slide faster?</label></div>' +
             '<div><label><input type="checkbox" name="crazy_piece" /> Use crazy piece?</label></div>' +
             '<div><label><input type="checkbox" name="key_entropy" /> Use key press as entropy source?</label></div>' +
@@ -39,6 +42,10 @@ var Dialog = require('./Dialog'),
 
 function Options (opts) {
     opts && (opts.content = TMPL) || (opts = {content: TMPL});
+    if (opts.message)
+        opts.content = opts.content.replace(/\$\{message\}/, '<div style="border:1px solid #FAFAFA;background:#FFA;padding:5px;font-weight:bold;margin:-1em 0 1em 0">' + opts.message + '</div>');
+    else
+        opts.content = opts.content.replace(/\$\{message\}/, '');
     this.data  = mix(opts.data);
     this._data = mix(opts.data);
     this._handles = [];
@@ -54,15 +61,15 @@ mix({
 
         function asBool (str) {return str == 'true'}
 
-        var start   = $('[name="start_level"]', this.dom)[0],
-            radios  = $('[name="up_turns_right"]', this.dom),
-            faster  = $('[name="slide_fast"]', this.dom)[0],
-            crazy   = $('[name="crazy_piece"]', this.dom)[0],
-            entropy = $('[name="key_entropy"]', this.dom)[0],
-            rGen    = $('[name="random_generator"]', this.dom)[0],
-            bagWrap = $('.bag-size', this.dom)[0],
-            bagSize = $('[name="bag_size"]', bagWrap)[0],
-            maxSpeed = $('[name="max_speed"]', this.dom)[0];
+        var start    = $('[name="start_level"]', this.dom)[0],
+            radios   = $('[name="up_turns_right"]', this.dom),
+            faster   = $('[name="slide_fast"]', this.dom)[0],
+            crazy    = $('[name="crazy_piece"]', this.dom)[0],
+            entropy  = $('[name="key_entropy"]', this.dom)[0],
+            rGen     = $('[name="random_generator"]', this.dom)[0],
+            bagWrap  = $('.bag-size', this.dom)[0],
+            bagSize  = $('[name="bag_size"]', bagWrap)[0],
+            maxLevel = $('[name="max_level"]', this.dom)[0];
 
         for (var i = 0; i < radios.length; i++) {
             if (asBool(radios[i].value) == this.data.up_turns_right) {
@@ -77,7 +84,7 @@ mix({
         entropy.checked = this.data.use_keyboard_entropy;
         bagSize.value = this.data.bag_size;
         rGen.checked = this.data.use_the_random_generator;
-        maxSpeed.value = this.data.max_speed || -1;
+        maxLevel.value = this.data.max_level || -1;
 
         this.data.use_the_random_generator && removeClass(bagWrap, 'hidden');
 
@@ -104,7 +111,7 @@ mix({
                     this.data.use_the_random_generator = rGen.checked;
                     this.data.bag_size = +bagSize.value;
                     this.data.use_keyboard_entropy = entropy.checked;
-                    this.data.max_speed = +maxSpeed.value;
+                    this.data.max_level = +maxLevel.value;
                 } else {
                     this.data = this._data;
                 }

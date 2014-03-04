@@ -30,5 +30,11 @@ module.exports = {
     // @see <http://tetrisconcept.net/wiki/Random_Generator>
     "use_the_random_generator": true,
     "bag_size": 7,
-    "max_speed": -1
+    "max_level": -1,
+    "version": {
+        "major": 1,
+        "minor": 0,
+        "point": 0
+    },
+    "version_string": "1.0.0"
 };
