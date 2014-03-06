@@ -9,21 +9,7 @@ var Dialog = require('./Dialog'),
     contains = require('../Grue/js/dom/contains'),
  
     // inline template  for now
-    TMPL = '<h2>Options</h2>' +
-            '${message}' +
-            '<div class="g_row">' +
-                '<label>Starting Level: <input type="number" min="0" max="30" name="start_level" style="width:50px" /></label>' +
-                ' <label>Max Level: <input type="number" title="-1 for unlimited. The rate of descent increases with the level." name="max_level" step="1" style="width:50px" /></label>' +
-            '</div>' +
-            '<div class="g_row"><span>Up Arrow Turns:</span>' +
-            '<label><input type="radio" name="up_turns_right" value="false" /><span>left</span></label> ' +
-            '<label><input type="radio" name="up_turns_right" value="true" /><span>right</span></label>'  +
-            '</div>' + 
-            '<div><label><input type="checkbox" name="slide_fast" /> Slide faster?</label></div>' +
-            '<div><label><input type="checkbox" name="crazy_piece" /> Use crazy piece?</label></div>' +
-            '<div><label><input type="checkbox" name="key_entropy" /> Use key press as entropy source?</label></div>' +
-            '<div><label><input type="checkbox" name="random_generator" /> Use "<a href="http://tetrisconcept.net/wiki/Random_Generator" target="_blank">The Random Generator</a>"?</label> <label class="bag-size hidden"> Bag Size: <input type="number" name="bag_size" min="7" max="63" value="7" step="7" /></div>' +
-            '<div class="g_row btns-right"><button type="button" class="btn btn-small cancel-btn" name="cancel">Cancel</button> <button type="button" class="btn btn-small save-btn" name="save">Save</button>',
+    TMPL = '<h2>Options</h2>${message}<div class="g_row"><label>Starting Level: <input type="number" min="0" max="30" name="start_level" style="width:50px"></label> <label>Max Level: <input type="number" title="-1 for unlimited. The rate of descent increases with the level." name="max_level" step="1" style="width:50px"></label></div><div class="g_row"><span>Up Arrow Turns:</span><label><input type="radio" name="up_turns_right" value="false"><span>left</span></label> <label><input type="radio" name="up_turns_right" value="true"><span>right</span></label></div><div><label><input type="checkbox" name="slide_fast"> Slide faster?</label></div><div><label><input type="checkbox" name="crazy_piece"> Use crazy piece?</label></div><div><label><input type="checkbox" name="key_entropy"> Use key press as entropy source?</label></div><div><label><input type="checkbox" name="random_generator"> Use "<a href="http://tetrisconcept.net/wiki/Random_Generator" target="_blank">The Random Generator</a>"?</label> <label class="bag-size hidden"> Bag Size: <input type="number" name="bag_size" min="7" max="63" value="7" step="7"></label></div><div class="g_row btns-right"><button type="button" class="btn btn-small cancel-btn" name="cancel">Cancel</button> <button type="button" class="btn btn-small save-btn" name="save">Save</button></div>',
 
     $ = function (selector, root) {
         var sel = (root || document).querySelectorAll(selector),
