@@ -22,6 +22,17 @@
 
 }
 
+@font-face {
+    font-family: 'anonymous_proregular';
+    src: url('fonts/anonymous_pro-webfont.eot');
+    src: url('fonts/anonymous_pro-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/anonymous_pro-webfont.woff') format('woff'),
+         url('fonts/anonymous_pro-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
 h1 {
     font-size: 2.7em;
     margin: 0;
@@ -83,7 +94,7 @@ h2 {
     padding: 5px;
 
     /*margin-top: 250px;*/
-    font-family: pt_monoregular, monospace;
+    font-family: anonymous_proregular, monospace;
     font-weight: normal;
     width: 200px;
 }
@@ -107,7 +118,7 @@ h2 {
     -mozilla-transform: translateZ(0);
     -webkit-transform: translateZ(0); /* hack. in current versions of chrome, this switches to hardware compositing */
     transform: translateZ(0);
-    font-family: pt_monoregular, monospace;
+    font-family: anonymous_proregular, monospace;
     /*font-weight: bold;*/
     border-color: #555;
     color: #000;
