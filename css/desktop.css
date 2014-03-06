@@ -1,14 +1,4 @@
 /* very tiny subset of a nice monospace font for use in scoreboard */
-@font-face {
-    font-family: 'pt_monoregular';
-    src: url('fonts/ptm55ft-webfont.eot');
-    src: url('fonts/ptm55ft-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fonts/ptm55ft-webfont.woff') format('woff'),
-         url('fonts/ptm55ft-webfont.ttf') format('truetype'),
-         url('fonts/ptm55ft-webfont.svg#pt_monoregular') format('svg');
-    font-weight: normal;
-    font-style: normal;
-}
 
 @font-face {
     font-family: 'intruder_alertregular';
@@ -17,6 +7,16 @@
          url('fonts/Intruder-webfont.woff') format('woff'),
          url('fonts/Intruder-webfont.ttf') format('truetype'),
          url('fonts/Intruder-webfont.svg#intruder_alertregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'anonymous_proregular';
+    src: url('fonts/anonymous_pro-webfont.eot');
+    src: url('fonts/anonymous_pro-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/anonymous_pro-webfont.woff') format('woff'),
+         url('fonts/anonymous_pro-webfont.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 
@@ -83,7 +83,7 @@ h2 {
     padding: 5px;
 
     /*margin-top: 250px;*/
-    font-family: pt_monoregular, monospace;
+    font-family: anonymous_proregular, monospace;
     font-weight: normal;
     width: 200px;
 }
@@ -107,7 +107,7 @@ h2 {
     -mozilla-transform: translateZ(0);
     -webkit-transform: translateZ(0); /* hack. in current versions of chrome, this switches to hardware compositing */
     transform: translateZ(0);
-    font-family: pt_monoregular, monospace;
+    font-family: anonymous_proregular, monospace;
     /*font-weight: bold;*/
     border-color: #555;
     color: #000;
