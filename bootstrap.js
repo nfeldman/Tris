@@ -187,36 +187,31 @@ if (typeof GRUE == 'undefined') throw Error('GRUE global not found.');
         return load(require, root, arrayToSet(keys(shared)), sync);
     };
 
+    GRUE.load = function (root, sync) {
+        return load(require, root, arrayToSet(keys(shared)), sync);
+    };
+
     // the process is very simple. we perform an ajax request for the main
     // program and get back an object full of source strings.
     // All it takes to get the ball rolling is to load the main module, but,
-    // because there are a few shims that should be evaluated before anything
-    // else, we have a special, only to be used at startup, sequential option
-    var fetchQueue = GRUE.__loadBeforeMain && GRUE.__loadBeforeMain.slice(0) || [],
-        loadQueue = [],
-        pending, waiting;
+    // because there are sometimes a few shims that should be evaluated before
+    // anything else, we have a special, only to be used at startup, sequential option
+    var fetchQueue = GRUE.__loadBeforeMain && GRUE.__loadBeforeMain || [],
+        loaded, pending, waiting;
 
     fetchQueue.push(index);
     pending = fetchQueue.length;
+    loaded = new Array(pending);
     delete GRUE.__loadBeforeMain;
 
-    for (var i = 0; i < fetchQueue.length; i++)
-        GRUE.load(fetchQueue[i], function (req) {
-            loadQueue.push(req);
-        });
-
-//     function initWhenAllLoad () {
-//         clearTimeout(waiting);
-//         if (loadQueue.length == fetchQueue.length) {
-//             for (var i = 0; i < loadQueue.length; i++)
-//                 onLoad(loadQueue[i]);
-//             loadQueue.length = 0;
-//             if (document.documentElement)
-//                 document.documentElement.className = document.documentElement.className.replace(/js-off/, '');
-//         } else {
-//             waiting = setTimeout(initWhenAllLoad, 15);
-//         }
-//     }
-
-//     initWhenAllLoad();
+    for (var i = 0; i < fetchQueue.length; i++) {
+        (function (idx) {
+            GRUE.load(fetchQueue[idx], function (req) {
+                loaded[idx] = req;
+                if (loaded.length == pending)
+                    for (var i = 0; i < pending; i++)
+                        onLoad(loaded[i]);
+            });
+        }(i));
+    }
 }());
