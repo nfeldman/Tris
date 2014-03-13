@@ -81,11 +81,18 @@ h2 {
     -o-border-radius: 3px;
     border-radius: 3px;
     padding: 5px;
-
     /*margin-top: 250px;*/
     font-family: anonymous_proregular, monospace;
     font-weight: normal;
+    /* using an explict width and height and setting overflow: hidden
+       creates a layout boundry (at least in chrome) so that reflows
+       triggered in this div are scoped to it. Reflowing the whole
+       document takes ~0.5ms reflowing just this div takes about 
+       0.3ms, so it is an irrelevant optimization in this particular
+       case, but harmless. */
     width: 200px;
+    height: 86px;
+    overflow: hidden;
 }
 
 .highscores ol {

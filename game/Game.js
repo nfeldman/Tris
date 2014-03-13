@@ -329,7 +329,6 @@ mix(/** @lends Game#prototype */{
         if (!this._state.descending)
             return;
 
-        this._counters.traveled = 0;
         if (this.maybeToggleDescent()) {
             ++this.piece.y;
             if (soft)
