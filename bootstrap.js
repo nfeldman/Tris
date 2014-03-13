@@ -205,18 +205,18 @@ if (typeof GRUE == 'undefined') throw Error('GRUE global not found.');
             loadQueue.push(req);
         });
 
-    function initWhenAllLoad () {
-        clearTimeout(waiting);
-        if (loadQueue.length == fetchQueue.length) {
-            for (var i = 0; i < loadQueue.length; i++)
-                onLoad(loadQueue[i]);
-            loadQueue.length = 0;
-            if (document.documentElement)
-                document.documentElement.className = document.documentElement.className.replace(/js-off/, '');
-        } else {
-            waiting = setTimeout(initWhenAllLoad, 15);
-        }
-    }
+//     function initWhenAllLoad () {
+//         clearTimeout(waiting);
+//         if (loadQueue.length == fetchQueue.length) {
+//             for (var i = 0; i < loadQueue.length; i++)
+//                 onLoad(loadQueue[i]);
+//             loadQueue.length = 0;
+//             if (document.documentElement)
+//                 document.documentElement.className = document.documentElement.className.replace(/js-off/, '');
+//         } else {
+//             waiting = setTimeout(initWhenAllLoad, 15);
+//         }
+//     }
 
-    initWhenAllLoad();
+//     initWhenAllLoad();
 }());
