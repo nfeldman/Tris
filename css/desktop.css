@@ -129,7 +129,8 @@ h2 {
     font-size: 2em;
     width: 6.25em;
     margin-top: 10px;
-
+    height:  1.875em;
+    overflow: hidden;
     background: #c3d9ff; /* Old browsers */
     background: -moz-linear-gradient(top,  #c3d9ff 0%, #b1c8ef 41%, #98b0d9 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c3d9ff), color-stop(41%,#b1c8ef), color-stop(100%,#98b0d9)); /* Chrome,Safari4+ */
