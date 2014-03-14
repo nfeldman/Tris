@@ -16,6 +16,8 @@ function Score () {
         _rowsDisplayed: {value: 0, writable: true},
         _totalDisplayed: {value: 0, writable: true},
         _level: {value: 0, writable: true},
+        _rowsNode: {value: null, writable: true},
+        _totalNode: {value: null, writable: true},
         _maxLevel: {value: -1, writable: true}
     });
 
@@ -42,14 +44,17 @@ mix(/** @lends Score#prototype */ {
      * @return {undefined}
      */
     init: function () {
-        this.rowsNode.innerHTML  = 0;
-        this.totalNode.innerHTML = 0;
+        this._rowsNode = this.rowsNode.firstChild;
+        this._totalNode = this.totalNode.firstChild;
+        this._rowsNode.nodeValue  = 0;
+        this._totalNode.nodeValue = 0;
+
         this._handles.push(this.ticker.on('draw', function () {
             if (this.rows > this._rowsDisplayed) {
                 ++this._rowsDisplayed;
                 if (this._rowsDisplayed > this.rows)
                     this._rowsDisplayed = this.rows;
-                this.rowsNode.innerHTML = this._rowsDisplayed;
+                this._rowsNode.nodeValue = this._rowsDisplayed;
             }
 
             if (this.total > this._totalDisplayed) {
@@ -57,7 +62,7 @@ mix(/** @lends Score#prototype */ {
             //     if (this._totalDisplayed > this.total)
             //         this._totalDisplayed = this.total;
             //     this.totalNode.innerHTML = this._totalDisplayed;
-            this.totalNode.innerHTML = this.total;
+            this._totalNode.nodeValue = this.total;
             this._totalDisplayed = this.total;
             }
         }, this).lastRegisteredHandler);
@@ -79,7 +84,7 @@ Object.defineProperty(Score.prototype, 'level', {
     },
     set: function (n) {
         this._level = n;
-        this.levelNode.innerHTML = n;
+        this.levelNode.firstChild.nodeValue = n;
     }
 });
 
