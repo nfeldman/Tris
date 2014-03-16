@@ -29,9 +29,13 @@ h1 {
     font-family: intruder_alertregular;
     /*text-shadow: 0 1px 0 #ccc, 0 2px 0 #c9c9c9, 0 3px 0 #bbb, 0 4px 0 #b9b9b9, 0 5px 0 #aaa, 0 6px 1px rgba(0,0,0,.1), 0 0 5px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.3), 0 3px 5px rgba(0,0,0,.2), 0 5px 10px rgba(0,0,0,.3); }*/
 }
+
 h2 {
     font-family: intruder_alertregular;
-    font-size: 1.6em;
+    /*font-size: 1.6em;*/
+    font-size: 1.45em;
+    margin-top: 1.0434782608695652em;
+    line-height: 1.0434782608695652em;
 }
 
 .root {
@@ -210,4 +214,52 @@ canvas {
 
 .score-list li:nth-child(even) {
     background: #F5F5F5;
+}
+
+table {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+td,
+th {
+  padding: 0;
+}
+
+.highscores table {
+    width: 100%;
+    max-width: 200px;
+}
+
+
+.highscores th, 
+.highscores td {
+    padding: 0 5px;
+    text-align: right;
+} 
+
+.highscores table th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #98b0d9;
+    padding-bottom: 0;
+}
+
+.highscores td {
+    font-family: anonymous_proregular, monospace;
+}
+
+.highscores tbody tr {
+    -webkit-transition: background-color 250ms cubic-bezier(0.860, 0.000, 0.070, 1.000) 100ms;
+    -moz-transition: background-color 250ms cubic-bezier(0.860, 0.000, 0.070, 1.000) 100ms;
+    transition: background-color 250ms cubic-bezier(0.860, 0.000, 0.070, 1.000) 100ms;
+}
+
+.highscores tbody tr:hover {
+    background: #F2F7FF;
+}
+
+.highscores .current {
+    background: #FFD;
+}
+.highscores .current:hover {
+    background-color: #FFB;
 }
