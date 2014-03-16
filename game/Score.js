@@ -11,13 +11,13 @@ function Score () {
     this.total    = 0;
     this.scoring  = null;
 
+    this._rowsNode  = null;
+    this._totalNode = null;
     Object.defineProperties(this, {
         _handles: {value: [], writable: true},
         _rowsDisplayed: {value: 0, writable: true},
         _totalDisplayed: {value: 0, writable: true},
         _level: {value: 0, writable: true},
-        _rowsNode: {value: null, writable: true},
-        _totalNode: {value: null, writable: true},
         _maxLevel: {value: -1, writable: true}
     });
 

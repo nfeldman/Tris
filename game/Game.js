@@ -96,7 +96,8 @@ function Game () {
     this.ticker = null;
     this.scoreCtor = null;
     this.boardCtor = null;
-
+    this._timeing   = 0;
+    this._lastTime  = 0;
     this._keyState = {
         down: false,
         action: -1,
@@ -133,7 +134,9 @@ mix(/** @lends Game#prototype */{
      */
     reset: function () {
         var p = this.props;
-        this.ticker.stop();
+        // this.ticker.stop();
+
+        this._timeing = 0;
 
         this.dx = p.cellsize_x || p.cellsize,
         this.dy = p.cellsize_y || p.cellsize;
@@ -153,7 +156,7 @@ mix(/** @lends Game#prototype */{
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);
-        this._renderHighScore();
+
         this._newScoreBoard();
         this._newPlayField();
         this.preview.clear();
@@ -169,6 +172,7 @@ mix(/** @lends Game#prototype */{
      */
     init: function () {
         this.reset();
+        this._renderHighScore();
         this.layout.playfield.appendChild(this.board.canvas);
         this._toggleBtn = this.layout.root.querySelector('.meta > button[name="toggle"]');
         this._bindEvents();
@@ -298,7 +302,7 @@ mix(/** @lends Game#prototype */{
         if (this._state.playing)
             this.togglePlay();
         this._state.ended = true;
-
+        this._updateTimeing();
         this._updateHighScores();
         // TODO replace with custom dialog
         alert('Game Over!');
@@ -504,8 +508,10 @@ mix(/** @lends Game#prototype */{
             this._state.initial = false;
         }
 
-        if (this._state.playing)
+        if (this._state.playing) {
+            this._lastTime = Date.now();
             this.board.canvas.focus();
+        }
 
         // this.ticker.toggle();
         this.emitEvent('playing', this._state.playing);
@@ -549,12 +555,16 @@ mix(/** @lends Game#prototype */{
     },
 
     /** @private */
-    _renderHighScore: function (scores) {
+    _renderHighScore: function (scores, currScoreIdx) {
         if (!this.layout.highscores)
             this.layout.highscores = this.layout.root.getElementsByClassName('highscores')[0];
 
-        var div = this.layout.highscores,
-            ol, li;
+        var div   = this.layout.highscores,
+            table = '<table><thead><tr><th scope="col">Total</th><th scope="col">' +
+            'Level</th><th scope="col">Lines</th></tr></thead><tbody>',
+            rows  = [],
+            score = [],
+            scoreTmp, score, j, k;
 
         while (div.children.length > 1) {
             div.removeChild(div.lastChild);
@@ -568,19 +578,32 @@ mix(/** @lends Game#prototype */{
                 return;
         }
 
-        ol = document.createElement('ol');
-        ol.className = 'score-list';
-        li = '';
-        for (var i = 0; i < scores.length; i++)
-            li += '<li><span>total <b>' + scores[i].total + '</b></span> <span>level <b>' + scores[i].level + '</b></span></li>';
-        ol.innerHTML = li;
-        div.appendChild(ol);
+
+        for (var i = 0; i < scores.length; i++) {
+            scoreTmp = ''+scores[i].total;
+            j = scoreTmp.length;
+            k = 0;
+            score.length = 0;
+            while (j--) {
+                k++;
+                score.unshift(scoreTmp.charAt(j));
+                if (k &&  j && !(k % 3))
+                    score.unshift(',');
+            }
+            rows.push('<tr' + (scores[i].time ? ' title="total game time: ' + (scores[i].time / 1000) + 's">' : '>') + '<td>' + score.join('') + '</td><td>' + scores[i].level + '</td><td>' + (scores[i].lines || '&nbsp;') + '</td></tr>');
+        }
+
+        table += rows.join('') + '</tbody></table>';
+        div.innerHTML = '<h2>Your High Scores</h2>' + table;
+        if (currScoreIdx != null)
+            div.lastChild.tBodies[0].rows[currScoreIdx].className = 'current';
     },
 
     /** @private */
     _updateHighScores: function () {
         var level = this.score.level,
             total = this.score.total,
+            lines = this.score.rows,
             highs = localStorage.getItem('scores'),
             i, idx;
 
@@ -615,11 +638,17 @@ mix(/** @lends Game#prototype */{
 
         10 > i && (highs[i] = {
             total: total,
-            level: level
+            level: level,
+            lines: lines,
+            time: this._timeing
         });
 
         localStorage.setItem('scores', JSON.stringify(highs));
-        this._renderHighScore(highs);
+        this._renderHighScore(highs, 10 > i ? i : null);
+    },
+
+    _updateTimeing: function () {
+        this._timeing += Date.now() - this._lastTime;
     },
 
     /** @private */

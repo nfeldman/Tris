@@ -33,8 +33,8 @@ module.exports = {
     "max_level": -1,
     "version": {
         "major": 1,
-        "minor": 0,
+        "minor": 1,
         "point": 0
     },
-    "version_string": "1.0.0"
+    "version_string": "1.1.0"
 };

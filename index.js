@@ -14,10 +14,18 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
     merge  = require('./Grue/js/object/merge'),
     props = (function () {
             var props = localStorage.getItem('props');
+
             if (props) {
                 props = JSON.parse(props);
+                if (!props._user_configured || !props.version || props.version.major != PROPS.version.major || props.version.minor != PROPS.version.minor) {
+                    props.version = PROPS.version;
+                    props.version_string = PROPS.version_string;
+                    setTimeout(function () {
+                        showOptions('Gruetris has been updated. Please check your settings.');
+                    }, 0);
+                }
                 merge(PROPS, props, true);
-            } else{
+            } else {
                 props = PROPS;
             }
             return props;
@@ -86,7 +94,8 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                 use_keyboard_entropy: this.props.use_keyboard_entropy,
                 use_the_random_generator: this.props.use_the_random_generator,
                 bag_size: this.props.bag_size,
-                max_level: this.props.max_level || -1
+                max_level: this.props.max_level || -1,
+                clear_scores: false
             }, 
             message: message,
             destroyOnHide: true, 
@@ -118,6 +127,11 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                     this.reset();
                 } else {
                     wasPlaying && this.togglePlay();
+                }
+
+                if (data.clear_scores) {
+                    localStorage.removeItem('scores');
+                    this._renderHighScore();
                 }
 
                 if (!this.props._user_configured)
@@ -175,9 +189,5 @@ game.boardCtor = Board;
 game.scoreCtor = Score;
 game.init();
 
-if (!props._user_configured || !props.version || props.version.major != PROPS.version.major || props.version.minor != PROPS.version.minor) {
-    debugger;
-    showOptions('Gruetris has been updated. Please check your settings.');
-    props.version = PROPS.version;
-    props.version_string = PROPS.version_string;
-}
+if (!props._user_configured)
+    showOptions('Configure Gruetris');
