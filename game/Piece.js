@@ -186,14 +186,14 @@ var EventEmitter = require('../Grue/js/infrastructure/EventEmitter'),
         });
     }),
     colors = {
-        A: 'pink',
-        I: 'cyan',
-        O: 'yellow',
-        T: 'purple',
-        S: 'green',
-        Z: 'red',
-        J: 'blue',
-        L: 'orange',
+        A: '#ff518e',  // pink
+        I: '#00cbff',  // cyan
+        O: '#FCD400',  // yellow
+        T: '#601848',  // purple
+        S: '#9fcc3b',  // green
+        Z: '#C21A01',  // red
+        J: '#0415F3',  // blue
+        L: '#ff9800',  // orange
         R: 'lightgray'
     },
 
