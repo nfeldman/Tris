@@ -153,6 +153,7 @@ mix(/** @lends Game#prototype */{
         }, this);
 
         this.keyMap[38] = this.props.controls.up_turns_right ? ACTIONS.rotate_right : ACTIONS.rotate_left;
+        this.keyMap[40] = this.props.controls.down_inverse_of_up ? this.props.controls.up_turns_right ? ACTIONS.rotate_left : ACTIONS.rotate_right : ACTIONS.soft_drop;
 
         GameState.apply(this._state);
         GameCounters.apply(this._counters);

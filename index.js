@@ -88,6 +88,7 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
         new Options({
             data: {
                 up_turns_right: this.props.controls.up_turns_right,
+                down_inverse_of_up: this.props.controls.down_inverse_of_up,
                 start_level: this.props.start_level,
                 slide_fast: this.props.slide_fast,
                 use_crazy_piece: this.props.use_crazy_piece,
@@ -108,10 +109,11 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
                         this.props[k] = v;
                 }, this);
 
-                if (data.up_turns_right != this.props.controls.up_turns_right) {
-                    this.props.controls.up_turns_right = data.up_turns_right;
-                    this.keyMap[38] = this.props.controls.up_turns_right ? Game.ACTIONS.rotate_right : Game.ACTIONS.rotate_left;
-                }
+
+                this.props.controls.up_turns_right = data.up_turns_right;
+                this.props.controls.down_inverse_of_up = data.down_inverse_of_up;
+                this.keyMap[38] = this.props.controls.up_turns_right ? Game.ACTIONS.rotate_right : Game.ACTIONS.rotate_left;
+                this.keyMap[40] = this.props.controls.down_inverse_of_up ? data.up_turns_right ? Game.ACTIONS.rotate_left : Game.ACTIONS.rotate_right : Game.ACTIONS.soft_drop;
 
                 this.props.slide_fast = data.slide_fast;
                 this.props.max_level  = data.max_level;

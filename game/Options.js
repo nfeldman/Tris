@@ -9,7 +9,7 @@ var Dialog = require('./Dialog'),
     contains = require('../Grue/js/dom/contains'),
  
     // inline template  for now
-    TMPL = '<h2>Options</h2>${message}<div class="g_row"><label>Starting Level: <input type="number" min="0" max="30" name="start_level" style="width:50px"></label> <label>Max Level: <input type="number" title="-1 for unlimited. The rate of descent increases with the level." name="max_level" step="1" style="width:50px"></label></div><div class="g_row"><span>Up Arrow Turns:</span><label><input type="radio" name="up_turns_right" value="false"><span>left</span></label> <label><input type="radio" name="up_turns_right" value="true"><span>right</span></label></div><div><label><input type="checkbox" name="slide_fast"> Slide faster?</label></div><div><label><input type="checkbox" name="clear_scores"> Clear High Scores?</label></div><div><label><input type="checkbox" name="crazy_piece"> Use crazy piece?</label></div><div><label><input type="checkbox" name="key_entropy"> Use key press as entropy source?</label></div><div><label><input type="checkbox" name="random_generator"> Use "<a href="http://tetrisconcept.net/wiki/Random_Generator" target="_blank">The Random Generator</a>"?</label> <label class="bag-size hidden"> Bag Size: <input type="number" name="bag_size" min="7" max="63" value="7" step="7"></label></div><div class="g_row btns-right"><button type="button" class="btn btn-small cancel-btn" name="cancel">Cancel</button> <button type="button" class="btn btn-small save-btn" name="save">Save</button></div>',
+    TMPL = '<h2>Options</h2>${message}<div class="g_row"><label>Starting Level: <input type="number" min="0" max="30" name="start_level" style="width:50px"></label> <label>Max Level: <input type="number" title="-1 for unlimited. The rate of descent increases with the level." name="max_level" step="1" style="width:50px"></label></div><div class="g_row"><span>Up Arrow Turns:</span><label><input type="radio" name="up_turns_right" value="false"><span>left</span></label> <label><input type="radio" name="up_turns_right" value="true"><span>right</span></label><small style="float:right;margin-top:3px">"d" also turns left and "f" turns right</small></div><div class="g_row"><span>Down Arrow:</span><label><input type="radio" name="down_inverse_of_up" value="false"><span>slides down</span></label> <label><input type="radio" name="down_inverse_of_up" value="true"><span>turns opposite of up arrow</span></label> <br></div><div><label><input type="checkbox" name="slide_fast"> Slide faster?</label></div><div><label><input type="checkbox" name="clear_scores"> Clear High Scores?</label></div><div><label><input type="checkbox" name="crazy_piece"> Use crazy piece?</label></div><div><label><input type="checkbox" name="key_entropy"> Use key press as entropy source?</label></div><div><label><input type="checkbox" name="random_generator"> Use "<a href="http://tetrisconcept.net/wiki/Random_Generator" target="_blank">The Random Generator</a>"?</label> <label class="bag-size hidden"> Bag Size: <input type="number" name="bag_size" min="7" max="63" value="7" step="7"></label></div><div class="g_row btns-right"><button type="button" class="btn btn-small cancel-btn" name="cancel">Cancel</button> <button type="button" class="btn btn-small save-btn" name="save">Save</button></div>',
 
     $ = function (selector, root) {
         var sel = (root || document).querySelectorAll(selector),
@@ -48,7 +48,8 @@ mix({
         function asBool (str) {return str == 'true'}
 
         var start    = $('[name="start_level"]', this.dom)[0],
-            radios   = $('[name="up_turns_right"]', this.dom),
+            upArrow  = $('[name="up_turns_right"]', this.dom),
+            downArrow= $('[name="down_inverse_of_up"]', this.dom),
             faster   = $('[name="slide_fast"]', this.dom)[0],
             crazy    = $('[name="crazy_piece"]', this.dom)[0],
             entropy  = $('[name="key_entropy"]', this.dom)[0],
@@ -58,9 +59,16 @@ mix({
             maxLevel = $('[name="max_level"]', this.dom)[0],
             clear    = $('[name="clear_scores"]', this.dom)[0];
 
-        for (var i = 0; i < radios.length; i++) {
-            if (asBool(radios[i].value) == this.data.up_turns_right) {
-                radios[i].checked = true;
+        for (var i = 0; i < upArrow.length; i++) {
+            if (asBool(upArrow[i].value) == this.data.up_turns_right) {
+                upArrow[i].checked = true;
+                break;
+            }
+        }
+
+        for (var i = 0; i < downArrow.length; i++) {
+            if (asBool(downArrow[i].value) == this.data.down_inverse_of_up) {
+                downArrow[i].checked = true;
                 break;
             }
         }
@@ -88,9 +96,13 @@ mix({
 
             if (name == 'button') {
                 if (target.name == 'save') {
-                    for (var i = 0; i < radios.length; i++)
-                        if (radios[i].checked)
-                            this.data.up_turns_right = asBool(radios[i].value);
+                    for (var i = 0; i < upArrow.length; i++)
+                        if (upArrow[i].checked)
+                            this.data.up_turns_right = asBool(upArrow[i].value);
+
+                    for (var i = 0; i < downArrow.length; i++)
+                        if (downArrow[i].checked)
+                            this.data.down_inverse_of_up = asBool(downArrow[i].value);
 
                     this.data.start_level = Math.min(30, +start.value);
                     this.data.slide_fast  = faster.checked;

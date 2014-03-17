@@ -7,15 +7,16 @@ module.exports = {
         "soft_drop": 40, // down arrow
         "hard_drop": 32, // space 
         "play_toggle": 80, // P
-        "up_turns_right": false
+        "up_turns_right": true,
+        "down_inverse_of_up": false
     },
     // @see <http://tetrisconcept.net/wiki/Scoring>
     "scoring": {
         // score == level * number of rows * multiplier
         "line_multipliers": [40, 100, 300, 800],
         // bonuses
-        "soft_drop": 1,
-        "hard_drop": 2
+        "soft_drop": 1, // adds one point  per row
+        "hard_drop": 2  // adds two points per row
     },
     "cellsize": 25,
     "cols": 10,
@@ -33,8 +34,8 @@ module.exports = {
     "max_level": -1,
     "version": {
         "major": 1,
-        "minor": 1,
+        "minor": 2,
         "point": 0
     },
-    "version_string": "1.1.0"
+    "version_string": "1.2.0"
 };
