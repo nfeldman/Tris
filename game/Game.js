@@ -107,7 +107,7 @@ function Game () {
     // seems like it is probably time to factor the scoreboard into
     // its own thing
     this.sortAsc = false;
-    this.sortCol = 0;
+    this.sortCol = 'total';
 
     this.keyMap = Object.create(null);
 
@@ -565,8 +565,8 @@ mix(/** @lends Game#prototype */{
             this.layout.highscores = this.layout.root.getElementsByClassName('highscores')[0];
 
         var div   = this.layout.highscores,
-            table = '<table><thead><tr><th scope="col"><a href="#">Total</a></th><th scope="col">' +
-            '<a href="#">Level</a></th><th scope="col"><a href="#">Lines</a></th><th scope="col"><a href="#">Pts/Line</a></th></tr></thead><tbody>',
+            table = '<table><thead><tr><th scope="col"><a href="#total">Total</a></th><th scope="col">' +
+            '<a href="#level">Level</a></th><th scope="col"><a href="#lines">Lines</a></th><th scope="col"><a href="#ppl">Pts/Line</a></th></tr></thead><tbody>',
             rows  = [],
             score = [],
             that  = this,

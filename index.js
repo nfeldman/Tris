@@ -163,23 +163,19 @@ DOMEvents.on(layout.root, 'click', function (e) {
 
 DOMEvents.on(layout.highscores, 'click', function (e) {
     e.preventDefault();
-    var cell, idx;
+    var key;
 
     if (e.target.nodeName != 'A')
         return;
 
-    cell = e.target.parentNode;
+    key = e.target.href.slice(e.target.href.lastIndexOf('#') + 1);
 
-    idx = [].indexOf.call(cell.parentNode.cells, cell);
-    
-    if (~idx) {
-        if (idx == game.sortCol)
-            game.sortAsc = !game.sortAsc;
-        else
-            game.sortAsc = false;
-        game.sortCol = idx;
-        game.renderHighScore();
-    }
+    if (key == game.sortCol)
+        game.sortAsc = !game.sortAsc;
+    else
+        game.sortAsc = false;
+    game.sortCol = key;
+    game.renderHighScore();
 });
 
 function useKeypress () {
