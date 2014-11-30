@@ -36,7 +36,8 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
             root: root,
             preview: root.getElementsByClassName('preview')[0],
             playfield: root.getElementsByClassName('playfield')[0],
-            scoreboard: root.getElementsByClassName('scoreboard')[0]
+            scoreboard: root.getElementsByClassName('scoreboard')[0],
+            highscores: root.getElementsByClassName('highscores')[0]
         };
     }()),
     ticker = new Ticker(),
@@ -133,7 +134,7 @@ var hasLS = 'localStorage' in window && window.localStorage != null,
 
                 if (data.clear_scores) {
                     localStorage.removeItem('scores');
-                    this._renderHighScore();
+                    this.renderHighScore();
                 }
 
                 if (!this.props._user_configured)
@@ -159,6 +160,27 @@ DOMEvents.on(layout.root, 'click', function (e) {
     else if (target.name == 'options')
         showOptions();
 }, false, game);
+
+DOMEvents.on(layout.highscores, 'click', function (e) {
+    e.preventDefault();
+    var cell, idx;
+
+    if (e.target.nodeName != 'A')
+        return;
+
+    cell = e.target.parentNode;
+
+    idx = [].indexOf.call(cell.parentNode.cells, cell);
+    
+    if (~idx) {
+        if (idx == game.sortCol)
+            game.sortAsc = !game.sortAsc;
+        else
+            game.sortAsc = false;
+        game.sortCol = idx;
+        game.renderHighScore();
+    }
+});
 
 function useKeypress () {
     // use the time of key presses rather than Math.random as an entropy source
